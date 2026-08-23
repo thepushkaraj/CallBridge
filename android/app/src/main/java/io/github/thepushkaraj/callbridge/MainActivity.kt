@@ -1,7 +1,9 @@
 package io.github.thepushkaraj.callbridge
 
+import android.Manifest
 import android.app.Activity
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -49,5 +51,30 @@ class MainActivity : Activity() {
                 }
             }
         }
+
+        requestPhonePermissionIfNeeded()
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == PHONE_PERMISSION_REQUEST) {
+            statusText.text = if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+                getString(R.string.status_phone_permission_granted)
+            } else {
+                getString(R.string.status_phone_permission_needed)
+            }
+        }
+    }
+
+    private fun requestPhonePermissionIfNeeded() {
+        if (checkSelfPermission(Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
+            statusText.text = getString(R.string.status_phone_permission_granted)
+        } else {
+            requestPermissions(arrayOf(Manifest.permission.READ_PHONE_STATE), PHONE_PERMISSION_REQUEST)
+        }
+    }
+
+    private companion object {
+        const val PHONE_PERMISSION_REQUEST = 1
     }
 }

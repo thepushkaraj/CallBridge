@@ -12,7 +12,7 @@ object ApiClient {
     private const val PREFS = "callbridge"
     private const val TIMEOUT_MS = 4000
 
-    fun sendEvent(context: Context, event: String): Result<Unit> {
+    fun sendEvent(context: Context, event: String, number: String = "", caller: String = ""): Result<Unit> {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val host = prefs.getString("host", null)?.trim().orEmpty()
         if (host.isEmpty()) {
@@ -23,8 +23,8 @@ object ApiClient {
 
         val body = JSONObject().apply {
             put("event", event)
-            put("number", "")
-            put("caller", "")
+            put("number", number)
+            put("caller", caller)
             put("device", android.os.Build.MODEL)
         }
         return post("http://$host:$port/call", secret, body)
