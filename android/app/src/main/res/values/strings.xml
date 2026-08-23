@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CallBridge</string>
+    <string name="host_hint">Mac IP address (e.g. 192.168.1.20)</string>
+    <string name="port_hint">Port (default 8765)</string>
+    <string name="secret_hint">Shared secret (optional)</string>
+    <string name="save">Save</string>
+    <string name="send_test">Send test</string>
+    <string name="status_saved">Saved.</string>
+    <string name="status_sending">Sending…</string>
+    <string name="status_test_ok">Test sent! Check your Mac for a notification.</string>
+    <string name="status_test_failed">Failed: %1$s</string>
+    <string name="status_phone_permission_granted">Watching for incoming calls.</string>
+    <string name="status_phone_permission_needed">Phone permission is needed to detect incoming calls.</string>
+</resources>
