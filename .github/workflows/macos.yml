@@ -1,0 +1,30 @@
+name: macOS
+
+on:
+  push:
+    tags: ["v*"]
+  pull_request:
+    paths: ["mac/**"]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build release binary
+        run: swift build -c release
+        working-directory: mac
+
+      - name: Upload artifact (pull requests)
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: callbridge-macos
+          path: mac/.build/release/callbridge
+
+      - name: Attach binary to release (tags)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: mac/.build/release/callbridge
