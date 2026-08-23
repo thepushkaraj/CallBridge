@@ -66,7 +66,9 @@ final class CallServer {
         guard let call = IncomingCall.from(jsonData: request.body), !call.event.isEmpty else {
             return HTTPResponse(status: "400 Bad Request", body: "{\"ok\":false}")
         }
-        appLog("\(call.event) from \(call.device.isEmpty ? "unknown device" : call.device)")
+        let detail = [call.caller, call.number].filter { !$0.isEmpty }.joined(separator: " \u{00B7} ")
+        let source = call.device.isEmpty ? "unknown device" : call.device
+        appLog("\(call.event) from \(source)\(detail.isEmpty ? "" : " (\(detail))")")
         Notifier.handle(call)
         return HTTPResponse(status: "200 OK", body: "{\"ok\":true}")
     }

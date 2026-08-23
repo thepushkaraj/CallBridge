@@ -11,7 +11,7 @@
     <string name="status_test_ok">Test sent! Check your Mac for a notification.</string>
     <string name="status_test_failed">Failed: %1$s</string>
     <string name="status_phone_permission_granted">Watching for incoming calls.</string>
-    <string name="status_phone_permission_needed">Phone permission is needed to detect incoming calls.</string>
+    <string name="status_phone_permission_needed">Phone, call log, and contacts permissions are needed to detect incoming calls.</string>
     <string name="channel_name">Call watching</string>
     <string name="notification_title">CallBridge is active</string>
     <string name="notification_text">Watching for incoming calls</string>

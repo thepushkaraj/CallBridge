@@ -69,7 +69,7 @@ class MainActivity : Activity() {
             oemHint.setOnClickListener { openAppSettings() }
         }
 
-        requestPhonePermissionIfNeeded()
+        requestCallPermissionsIfNeeded()
         requestNotificationPermissionIfNeeded()
         requestIgnoreBatteryOptimizationsOnce(prefs)
         WatchService.start(this)
@@ -79,7 +79,7 @@ class MainActivity : Activity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
             PHONE_PERMISSION_REQUEST -> statusText.text =
-                if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+                if (hasCallPermissions()) {
                     getString(R.string.status_phone_permission_granted)
                 } else {
                     getString(R.string.status_phone_permission_needed)
@@ -87,11 +87,16 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun requestPhonePermissionIfNeeded() {
-        if (checkSelfPermission(Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
+    private fun hasCallPermissions(): Boolean {
+        return CALL_PERMISSIONS.all { checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED }
+    }
+
+    private fun requestCallPermissionsIfNeeded() {
+        val missing = CALL_PERMISSIONS.filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
+        if (missing.isEmpty()) {
             statusText.text = getString(R.string.status_phone_permission_granted)
         } else {
-            requestPermissions(arrayOf(Manifest.permission.READ_PHONE_STATE), PHONE_PERMISSION_REQUEST)
+            requestPermissions(missing.toTypedArray(), PHONE_PERMISSION_REQUEST)
         }
     }
 
@@ -129,5 +134,10 @@ class MainActivity : Activity() {
         const val PHONE_PERMISSION_REQUEST = 1
         const val NOTIFICATION_PERMISSION_REQUEST = 2
         const val BATTERY_ASKED_KEY = "asked_battery_optimization"
+        val CALL_PERMISSIONS = arrayOf(
+            Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.READ_CALL_LOG,
+            Manifest.permission.READ_CONTACTS
+        )
     }
 }
