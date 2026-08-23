@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:android-to-mac-phone}/mac",
+            "name": "Debug callbridge (mac)",
+            "target": "callbridge",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug callbridge (mac)"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:android-to-mac-phone}/mac",
+            "name": "Release callbridge (mac)",
+            "target": "callbridge",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release callbridge (mac)"
+        }
+    ]
+}
