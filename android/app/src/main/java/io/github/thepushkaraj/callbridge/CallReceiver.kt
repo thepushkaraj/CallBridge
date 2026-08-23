@@ -26,58 +26,51 @@ class CallReceiver : BroadcastReceiver() {
         val incomingNumber = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)?.trim().orEmpty()
         Log.w(TAG, "Phone state: $state, number present: ${incomingNumber.isNotEmpty()}")
 
+        if (state == TelephonyManager.EXTRA_STATE_IDLE || state == TelephonyManager.EXTRA_STATE_OFFHOOK) {
+            synchronized(lock) {
+                isRinging = false
+                lastRingNumber = ""
+            }
+            return
+        }
+
         if (state != TelephonyManager.EXTRA_STATE_RINGING) return
 
-        val now = System.currentTimeMillis()
-        val pendingResult = goAsync()
+        val appContext = context.applicationContext
+        val hasCallLogPermission = appContext.checkSelfPermission(Manifest.permission.READ_CALL_LOG) == PackageManager.PERMISSION_GRANTED
 
+        // On Android 9+, the telephony framework delivers an initial broadcast without extras on cell paging,
+        // followed shortly by the authoritative broadcast with caller ID.
+        // When READ_CALL_LOG is granted, skip the preliminary numberless broadcast so we only notify with caller info.
+        if (hasCallLogPermission && incomingNumber.isEmpty()) {
+            Log.i(TAG, "Ignoring preliminary numberless broadcast (waiting for caller ID)")
+            return
+        }
+
+        val now = System.currentTimeMillis()
+        synchronized(lock) {
+            if (isRinging && lastRingNumber == incomingNumber && (now - lastRingTime < DEDUP_WINDOW_MS)) {
+                Log.i(TAG, "Ignoring duplicate ringing broadcast for $incomingNumber")
+                return
+            }
+            isRinging = true
+            lastRingTime = now
+            lastRingNumber = incomingNumber
+        }
+
+        val pendingResult = goAsync()
         thread {
             try {
-                val appContext = context.applicationContext
-
-                if (incomingNumber.isNotEmpty()) {
-                    synchronized(lock) {
-                        if (now - lastRingTime < DEDUP_WINDOW_MS && lastRingNumber == incomingNumber) {
-                            Log.i(TAG, "Ignoring duplicate ringing broadcast for $incomingNumber")
-                            return@thread
-                        }
-                        lastRingTime = now
-                        lastRingNumber = incomingNumber
-                    }
-
-                    val callerName = resolveCallerName(appContext, incomingNumber)
-                    Log.i(TAG, "Sending ringing event: number=$incomingNumber, caller=$callerName")
-                    val result = ApiClient.sendEvent(
-                        appContext,
-                        ApiClient.EVENT_RINGING,
-                        number = incomingNumber,
-                        caller = callerName
-                    )
-                    Log.i(TAG, "Send result: $result")
-                    showToast(appContext, result.isSuccess)
-                } else {
-                    if (appContext.checkSelfPermission(Manifest.permission.READ_CALL_LOG) == PackageManager.PERMISSION_GRANTED) {
-                        Thread.sleep(EMPTY_NUMBER_DELAY_MS)
-                    }
-                    synchronized(lock) {
-                        if (System.currentTimeMillis() - lastRingTime < DEDUP_WINDOW_MS) {
-                            Log.i(TAG, "Ignoring duplicate/superseded empty ringing broadcast")
-                            return@thread
-                        }
-                        lastRingTime = System.currentTimeMillis()
-                        lastRingNumber = ""
-                    }
-
-                    Log.i(TAG, "Sending ringing event with unknown number")
-                    val result = ApiClient.sendEvent(
-                        appContext,
-                        ApiClient.EVENT_RINGING,
-                        number = "",
-                        caller = ""
-                    )
-                    Log.i(TAG, "Send result: $result")
-                    showToast(appContext, result.isSuccess)
-                }
+                val callerName = resolveCallerName(appContext, incomingNumber)
+                Log.i(TAG, "Sending ringing event: number=$incomingNumber, caller=$callerName")
+                val result = ApiClient.sendEvent(
+                    appContext,
+                    ApiClient.EVENT_RINGING,
+                    number = incomingNumber,
+                    caller = callerName
+                )
+                Log.i(TAG, "Send result: $result")
+                showToast(appContext, result.isSuccess)
             } catch (e: Exception) {
                 Log.e(TAG, "Error handling phone state broadcast", e)
             } finally {
@@ -125,10 +118,10 @@ class CallReceiver : BroadcastReceiver() {
 
     private companion object {
         const val TAG = "CallBridge"
-        const val DEDUP_WINDOW_MS = 4000L
-        const val EMPTY_NUMBER_DELAY_MS = 400L
+        const val DEDUP_WINDOW_MS = 8000L
 
         val lock = Any()
+        @Volatile var isRinging: Boolean = false
         @Volatile var lastRingTime: Long = 0L
         @Volatile var lastRingNumber: String = ""
     }
