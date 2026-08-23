@@ -12,4 +12,10 @@
     <string name="status_test_failed">Failed: %1$s</string>
     <string name="status_phone_permission_granted">Watching for incoming calls.</string>
     <string name="status_phone_permission_needed">Phone permission is needed to detect incoming calls.</string>
+    <string name="channel_name">Call watching</string>
+    <string name="notification_title">CallBridge is active</string>
+    <string name="notification_text">Watching for incoming calls</string>
+    <string name="receiver_toast">CallBridge: call detected, notification %1$s</string>
+    <string name="vivo_hint">Vivo detected: tap here, then enable Autostart and set Background power consumption to Allow for CallBridge. Without this, Vivo may kill the app.</string>
+    <string name="generic_oem_hint">Your phone brand restricts background apps: tap here, then allow autostart / no battery restrictions for CallBridge.</string>
 </resources>

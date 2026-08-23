@@ -71,5 +71,13 @@
             android:layout_height="wrap_content"
             android:paddingTop="16dp"
             android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/oem_hint_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="16dp"
+            android:textSize="14sp"
+            android:textColor="#B0606060" />
     </LinearLayout>
 </ScrollView>

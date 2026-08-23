@@ -3,8 +3,13 @@ package io.github.thepushkaraj.callbridge
 import android.Manifest
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
+import android.provider.Settings
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -22,6 +27,7 @@ class MainActivity : Activity() {
         val secretInput = findViewById<EditText>(R.id.secret_input)
         val saveButton = findViewById<Button>(R.id.save_button)
         val testButton = findViewById<Button>(R.id.test_button)
+        val oemHint = findViewById<TextView>(R.id.oem_hint_text)
         statusText = findViewById(R.id.status_text)
 
         val prefs = getSharedPreferences("callbridge", Context.MODE_PRIVATE)
@@ -52,17 +58,32 @@ class MainActivity : Activity() {
             }
         }
 
+        if (Build.MANUFACTURER.equals("vivo", ignoreCase = true)) {
+            oemHint.text = getString(R.string.vivo_hint)
+            oemHint.setOnClickListener { openAppSettings() }
+        } else if (Build.MANUFACTURER.equals("oppo", ignoreCase = true) ||
+            Build.MANUFACTURER.equals("realme", ignoreCase = true) ||
+            Build.MANUFACTURER.equals("xiaomi", ignoreCase = true)
+        ) {
+            oemHint.text = getString(R.string.generic_oem_hint)
+            oemHint.setOnClickListener { openAppSettings() }
+        }
+
         requestPhonePermissionIfNeeded()
+        requestNotificationPermissionIfNeeded()
+        requestIgnoreBatteryOptimizationsOnce(prefs)
+        WatchService.start(this)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == PHONE_PERMISSION_REQUEST) {
-            statusText.text = if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
-                getString(R.string.status_phone_permission_granted)
-            } else {
-                getString(R.string.status_phone_permission_needed)
-            }
+        when (requestCode) {
+            PHONE_PERMISSION_REQUEST -> statusText.text =
+                if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+                    getString(R.string.status_phone_permission_granted)
+                } else {
+                    getString(R.string.status_phone_permission_needed)
+                }
         }
     }
 
@@ -74,7 +95,39 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), NOTIFICATION_PERMISSION_REQUEST)
+        }
+    }
+
+    private fun requestIgnoreBatteryOptimizationsOnce(prefs: android.content.SharedPreferences) {
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        if (powerManager.isIgnoringBatteryOptimizations(packageName)) return
+        if (prefs.getBoolean(BATTERY_ASKED_KEY, false)) return
+        prefs.edit().putBoolean(BATTERY_ASKED_KEY, true).apply()
+        runCatching {
+            startActivity(
+                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                    .setData(Uri.parse("package:$packageName"))
+            )
+        }
+    }
+
+    private fun openAppSettings() {
+        runCatching {
+            startActivity(
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                    .setData(Uri.parse("package:$packageName"))
+            )
+        }
+    }
+
     private companion object {
         const val PHONE_PERMISSION_REQUEST = 1
+        const val NOTIFICATION_PERMISSION_REQUEST = 2
+        const val BATTERY_ASKED_KEY = "asked_battery_optimization"
     }
 }
