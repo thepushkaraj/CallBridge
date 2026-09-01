@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/logo.png" width="128" height="128" alt="CallBridge Logo" />
+</p>
+
 # CallBridge
 
 Get a native macOS notification the instant your Android phone rings.
