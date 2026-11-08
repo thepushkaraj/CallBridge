@@ -59,6 +59,31 @@ server sends `{"ok":true}`). Error codes:
 | 401  | Server requires a secret and it was missing or wrong           |
 | 404  | Path is not `/call`                                            |
 
+## Pairing QR payload
+
+The macOS app renders its connection settings as a QR code so the Android
+app can pair without typing. The QR contains this JSON:
+
+```json
+{
+  "app": "callbridge",
+  "v": 1,
+  "host": "192.168.1.20",
+  "port": 8765,
+  "secret": "hunter2"
+}
+```
+
+| Field    | Type   | Required | Description                                              |
+|----------|--------|----------|----------------------------------------------------------|
+| `app`    | string | no       | Fixed `callbridge`. Readers should reject other values.  |
+| `v`      | number | no       | Payload version, currently `1`.                          |
+| `host`   | string | yes      | IPv4 address of the Mac on the shared network.           |
+| `port`   | number | yes      | TCP port the listener accepts calls on.                  |
+| `secret` | string | no       | Omitted when no shared secret is configured.             |
+
+Readers must ignore unknown fields.
+
 ## Reference exchange
 
 ```bash

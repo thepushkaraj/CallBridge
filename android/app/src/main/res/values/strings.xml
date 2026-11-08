@@ -1,21 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">CallBridge</string>
-    <string name="host_hint">Mac IP address (e.g. 192.168.1.20)</string>
-    <string name="port_hint">Port (default 8765)</string>
+    <string name="app_subtitle">Get your Mac notified the moment your phone rings</string>
+
+    <!-- Status row -->
+    <string name="status_permission_needed">Tap to allow phone access — CallBridge needs it to detect incoming calls.</string>
+    <string name="status_not_paired">Not paired yet — scan the QR code shown by CallBridge on your Mac.</string>
+    <string name="status_paired_watching">Paired with %1$s · watching for incoming calls</string>
+
+    <!-- Pairing card -->
+    <string name="pair_title">Pair with your Mac</string>
+    <string name="pair_caption">On your Mac, open CallBridge — a QR code appears there. Scan it once and you\'re connected.</string>
+    <string name="scan_qr">Scan QR code</string>
+    <string name="manual_toggle_show">Enter address manually</string>
+    <string name="manual_toggle_hide">Hide manual entry</string>
+    <string name="host_hint">Mac IP address</string>
+    <string name="port_hint">Port</string>
     <string name="secret_hint">Shared secret (optional)</string>
-    <string name="save">Save</string>
+    <string name="save">Save settings</string>
+    <string name="host_required">Enter your Mac\'s IP address</string>
+
+    <!-- Connection test -->
+    <string name="test_title">Connection test</string>
+    <string name="test_idle_hint">Sends a check-in to your Mac</string>
     <string name="send_test">Send test</string>
-    <string name="status_saved">Saved.</string>
     <string name="status_sending">Sending…</string>
-    <string name="status_test_ok">Test sent! Check your Mac for a notification.</string>
-    <string name="status_test_failed">Failed: %1$s</string>
-    <string name="status_phone_permission_granted">Watching for incoming calls.</string>
-    <string name="status_phone_permission_needed">Phone, call log, and contacts permissions are needed to detect incoming calls.</string>
+    <string name="status_test_ok">Test sent — check your Mac for the notification.</string>
+    <string name="status_test_failed">Couldn\'t reach your Mac: %1$s</string>
+    <string name="status_saved">Saved. Send a test to check the connection.</string>
+    <string name="paired_check_hint">Paired with %1$s:%2$s — send a test to check the connection.</string>
+
+    <!-- Scanner -->
+    <string name="scanner_title">Point your camera at the QR code on your Mac</string>
+    <string name="scanner_error">That\'s not a CallBridge code — try the QR from your Mac.</string>
+    <string name="scanner_camera_needed">Camera permission is needed to scan. Allow CallBridge in Settings, then reopen the scanner.</string>
+    <string name="scanner_close">Close scanner</string>
+    <string name="scanner_torch">Toggle light</string>
+
+    <string name="footer_wifi">Both devices must be on the same Wi-Fi network.</string>
+
+    <!-- Background service -->
     <string name="channel_name">Call watching</string>
     <string name="notification_title">CallBridge is active</string>
     <string name="notification_text">Watching for incoming calls</string>
     <string name="receiver_toast">CallBridge: call detected, notification %1$s</string>
+
+    <!-- OEM battery hints -->
     <string name="vivo_hint">Vivo detected: tap here, then enable Autostart and set Background power consumption to Allow for CallBridge. Without this, Vivo may kill the app.</string>
     <string name="generic_oem_hint">Your phone brand restricts background apps: tap here, then allow autostart / no battery restrictions for CallBridge.</string>
 </resources>

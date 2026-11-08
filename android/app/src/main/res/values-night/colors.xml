@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Night: true dark surfaces, soft mint accent. -->
+    <color name="background">#101312</color>
+    <color name="surface">#181C1A</color>
+    <color name="surface_variant">#222825</color>
+    <color name="on_surface">#E2E5E2</color>
+    <color name="on_surface_variant">#9CA49E</color>
+    <color name="outline">#3C423E</color>
+    <color name="primary">#7FD2A9</color>
+    <color name="on_primary">#0A3A27</color>
+    <color name="primary_container">#155839</color>
+    <color name="on_primary_container">#C9ECD8</color>
+    <color name="error_color">#F2B8B5</color>
+    <color name="warning_container">#332B14</color>
+    <color name="on_warning_container">#EAD7A0</color>
+    <color name="warning_dot">#E8C268</color>
+    <color name="neutral_dot">#6E7570</color>
+</resources>

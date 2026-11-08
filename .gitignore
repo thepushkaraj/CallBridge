@@ -16,3 +16,7 @@ captures/
 
 # General
 *.log
+
+# ZCode workspace & local build artifacts
+.zcode/
+/CallBridge-*.apk

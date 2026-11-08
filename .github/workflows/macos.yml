@@ -12,8 +12,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build release binary
-        run: swift build -c release
+      - name: Build CallBridge.app
+        run: ./make_app.sh release
+        working-directory: mac
+
+      - name: Zip app bundle
+        run: ditto -c -k --keepParent build/CallBridge.app CallBridge-macOS.zip
         working-directory: mac
 
       - name: Upload artifact (pull requests)
@@ -21,10 +25,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: callbridge-macos
-          path: mac/.build/release/callbridge
+          path: mac/CallBridge-macOS.zip
 
-      - name: Attach binary to release (tags)
+      - name: Attach app to release (tags)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: mac/.build/release/callbridge
+          files: mac/CallBridge-macOS.zip

@@ -2,6 +2,14 @@ import Foundation
 import Network
 
 final class CallServer {
+    enum State {
+        case ready
+        case failed(String)
+    }
+
+    var onState: ((State) -> Void)?
+    var onEvent: ((IncomingCall) -> Void)?
+
     private let port: UInt16
     private let secret: String?
     private var listener: NWListener?
@@ -18,19 +26,32 @@ final class CallServer {
         listener.newConnectionHandler = { [weak self] connection in
             self?.accept(connection)
         }
-        listener.stateUpdateHandler = { state in
+        listener.stateUpdateHandler = { [weak self] state in
+            guard let self else { return }
             switch state {
             case .ready:
                 print("CallBridge listening on port \(self.port)")
+                self.onState?(.ready)
             case .failed(let error):
-                print("Server failed: \(error)")
-                exit(1)
+                let message: String
+                if error == .posix(.EADDRINUSE) {
+                    message = "Port \(self.port) is already in use"
+                } else {
+                    message = error.localizedDescription
+                }
+                print("Server failed: \(message)")
+                self.onState?(.failed(message))
             default:
                 break
             }
         }
         listener.start(queue: .main)
         self.listener = listener
+    }
+
+    func stop() {
+        listener?.cancel()
+        listener = nil
     }
 
     private func accept(_ connection: NWConnection) {
@@ -69,6 +90,7 @@ final class CallServer {
         let detail = [call.caller, call.number].filter { !$0.isEmpty }.joined(separator: " \u{00B7} ")
         let source = call.device.isEmpty ? "unknown device" : call.device
         appLog("\(call.event) from \(source)\(detail.isEmpty ? "" : " (\(detail))")")
+        onEvent?(call)
         Notifier.handle(call)
         return HTTPResponse(status: "200 OK", body: "{\"ok\":true}")
     }
