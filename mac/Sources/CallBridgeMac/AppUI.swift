@@ -428,6 +428,14 @@ struct LastEventRow: View {
         }
         .accessibilityElement(children: .combine)
     }
+
+    private func symbol(for title: String) -> String {
+        switch title {
+        case "Ringing": return "phone.arrow.down.left.fill"
+        case "SMS": return "message.fill"
+        default: return "checkmark.circle.fill"
+        }
+    }
 }
 
 // MARK: - Copy address button

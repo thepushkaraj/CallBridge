@@ -8,7 +8,7 @@ final class CallServer {
     }
 
     var onState: ((State) -> Void)?
-    var onEvent: ((IncomingCall) -> Void)?
+    var onEvent: ((IncomingEvent) -> Void)?
 
     private let port: UInt16
     private let secret: String?
@@ -84,7 +84,7 @@ final class CallServer {
         guard request.method == "POST", request.path == "/call" else {
             return HTTPResponse(status: "404 Not Found", body: "{\"ok\":false}")
         }
-        guard let call = IncomingCall.from(jsonData: request.body), !call.event.isEmpty else {
+        guard let call = IncomingEvent.from(jsonData: request.body), !call.event.isEmpty else {
             return HTTPResponse(status: "400 Bad Request", body: "{\"ok\":false}")
         }
         let detail = [call.caller, call.number].filter { !$0.isEmpty }.joined(separator: " \u{00B7} ")

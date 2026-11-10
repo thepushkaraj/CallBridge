@@ -58,6 +58,11 @@
     <string name="update_later">Later</string>
     <string name="update_download_failed">Update download failed — try again later.</string>
 
+    <!-- SMS forwarding -->
+    <string name="sms_pref_title">Forward SMS</string>
+    <string name="sms_pref_caption">Show text messages received on this phone as Mac notifications</string>
+    <string name="sms_permission_needed">SMS forwarding needs permission to receive messages.</string>
+
     <string name="footer_wifi">Both devices must be on the same Wi-Fi network.</string>
 
     <!-- Background service -->

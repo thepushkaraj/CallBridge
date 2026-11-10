@@ -5,10 +5,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Handler
 import android.os.Looper
-import android.provider.ContactsContract
 import android.telephony.TelephonyManager
 import android.util.Log
 import android.widget.Toast
@@ -61,7 +59,7 @@ class CallReceiver : BroadcastReceiver() {
         val pendingResult = goAsync()
         thread {
             try {
-                val callerName = resolveCallerName(appContext, incomingNumber)
+                val callerName = ContactLookup.resolveName(appContext, incomingNumber)
                 Log.i(TAG, "Sending ringing event: number=$incomingNumber, caller=$callerName")
                 val result = ApiClient.sendEvent(
                     appContext,
@@ -76,29 +74,6 @@ class CallReceiver : BroadcastReceiver() {
             } finally {
                 pendingResult.finish()
             }
-        }
-    }
-
-    private fun resolveCallerName(context: Context, number: String): String {
-        if (number.isBlank()) return ""
-        if (context.checkSelfPermission(Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
-            return ""
-        }
-        val uri = Uri.withAppendedPath(
-            ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
-            Uri.encode(number)
-        )
-        val projection = arrayOf(ContactsContract.PhoneLookup.DISPLAY_NAME)
-        return try {
-            context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
-                if (cursor.moveToFirst()) {
-                    val nameIndex = cursor.getColumnIndex(ContactsContract.PhoneLookup.DISPLAY_NAME)
-                    if (nameIndex != -1) cursor.getString(nameIndex).orEmpty() else ""
-                } else ""
-            } ?: ""
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to resolve contact name for $number", e)
-            ""
         }
     }
 

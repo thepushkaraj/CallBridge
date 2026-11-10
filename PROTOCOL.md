@@ -33,8 +33,9 @@ The server listens on TCP port `8765` by default (configurable).
 | Field    | Type   | Required | Description                                                        |
 |----------|--------|----------|--------------------------------------------------------------------|
 | `event`  | string | yes      | See [Events](#events). Unknown values must be ignored gracefully (respond `200`, optionally log). |
-| `number` | string | no       | Caller phone number in E.164 when available, otherwise empty string. |
+| `number` | string | no       | Caller or sender phone number in E.164 when available, otherwise empty string. |
 | `caller` | string | no       | Contact name when resolvable, otherwise empty string.              |
+| `body`   | string | no       | Message text (`sms` events only). Concatenated SMS parts are joined; may contain newlines. |
 | `device` | string | no       | Human-readable name of the sending device, e.g. the phone model.   |
 
 All fields except `event` may be omitted or empty; servers must handle
@@ -45,8 +46,9 @@ their absence.
 | Value     | Meaning                                        | Status        |
 |-----------|------------------------------------------------|---------------|
 | `ringing` | Phone is ringing for an incoming call          | stable        |
+| `sms`     | An SMS text message was received on the phone  | v0.3.0        |
 | `test`    | Connectivity test sent from the settings screen| stable        |
-| `missed`  | Incoming call was not answered                 | planned v0.2  |
+| `missed`  | Incoming call was not answered                 | planned       |
 
 ## Responses
 

@@ -7,12 +7,19 @@ import java.net.URL
 
 object ApiClient {
     const val EVENT_RINGING = "ringing"
+    const val EVENT_SMS = "sms"
     const val EVENT_TEST = "test"
 
     private const val PREFS = "callbridge"
     private const val TIMEOUT_MS = 4000
 
-    fun sendEvent(context: Context, event: String, number: String = "", caller: String = ""): Result<Unit> {
+    fun sendEvent(
+        context: Context,
+        event: String,
+        number: String = "",
+        caller: String = "",
+        body: String = ""
+    ): Result<Unit> {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val host = prefs.getString("host", null)?.trim().orEmpty()
         if (host.isEmpty()) {
@@ -21,13 +28,16 @@ object ApiClient {
         val port = prefs.getString("port", null)?.trim().takeUnless { it.isNullOrEmpty() } ?: "8765"
         val secret = prefs.getString("secret", null)?.trim().orEmpty()
 
-        val body = JSONObject().apply {
+        val payload = JSONObject().apply {
             put("event", event)
             put("number", number)
             put("caller", caller)
+            if (body.isNotEmpty()) {
+                put("body", body)
+            }
             put("device", android.os.Build.MODEL)
         }
-        return post("http://$host:$port/call", secret, body)
+        return post("http://$host:$port/call", secret, payload)
     }
 
     private fun post(url: String, secret: String, body: JSONObject): Result<Unit> {

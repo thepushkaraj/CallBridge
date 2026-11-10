@@ -17,8 +17,9 @@ Existing solutions (Pushbullet, KDE Connect) are either cloud relays that
 see your call metadata, or full device-suites when you only wanted call
 alerts. CallBridge does exactly one thing:
 
-- **Android**: a `BroadcastReceiver` notices an incoming call and POSTs a
-  tiny JSON event to your Mac over your local network.
+- **Android**: a `BroadcastReceiver` notices an incoming call — and, once
+  you opt in, received SMS messages — and POSTs a tiny JSON event to your
+  Mac over your local network.
 - **Mac**: a small app shows the same event as a native notification —
   and displays a QR code so pairing takes one scan.
 
@@ -92,7 +93,8 @@ Already installed? The app checks GitHub on launch and offers the update in-app 
 ## Roadmap
 
 - [x] v0.1 — ringing notifications, manual IP entry
-- [x] Mac `.app` with QR-code pairing *(this release)*
+- [x] Mac `.app` with QR-code pairing
+- [x] Opt-in SMS forwarding to Mac notifications *(this branch)*
 - [ ] Missed-call events
 - [ ] mDNS auto-discovery (no manual IP entry)
 - [ ] Signed DMG + APK releases

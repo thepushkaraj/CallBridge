@@ -24,13 +24,19 @@ enum Notifier {
         post(title: title, body: body, sound: false)
     }
 
-    static func handle(_ call: IncomingCall) {
+    static func handle(_ call: IncomingEvent) {
         switch call.event {
         case "ringing":
             let who = [call.caller, call.number]
                 .filter { !$0.isEmpty }
                 .joined(separator: " \u{00B7} ")
             post(title: "Incoming call", body: who.isEmpty ? "Unknown caller" : who)
+        case "sms":
+            let who = [call.caller, call.number]
+                .filter { !$0.isEmpty }
+                .joined(separator: " \u{00B7} ")
+            let sender = who.isEmpty ? "Unknown sender" : who
+            post(title: "SMS from \(sender)", body: call.body.isEmpty ? "(no text)" : call.body)
         case "test":
             let name = call.device.isEmpty ? "your phone" : call.device
             post(title: "CallBridge", body: "Test received from \(name) - you're connected")
@@ -80,6 +86,8 @@ enum Notifier {
     private static func escaped(_ s: String) -> String {
         s.replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: "\r", with: " ")
     }
 }
 

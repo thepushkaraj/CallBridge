@@ -167,18 +167,22 @@ final class AppState: ObservableObject {
     }
 
     func sendTestNotification() {
-        let call = IncomingCall(event: "test", number: "", caller: "", device: "This Mac")
+        let call = IncomingEvent(event: "test", number: "", caller: "", device: "This Mac", body: "")
         record(call)
         Notifier.handle(call)
     }
 
-    private func record(_ call: IncomingCall) {
+    private func record(_ call: IncomingEvent) {
         let title: String
         let detail: String
         switch call.event {
         case "ringing":
             title = "Ringing"
             detail = [call.caller, call.number].filter { !$0.isEmpty }.joined(separator: " · ")
+        case "sms":
+            title = "SMS"
+            let sender = [call.caller, call.number].filter { !$0.isEmpty }.joined(separator: " · ")
+            detail = sender.isEmpty ? call.body : sender + " — " + call.body
         case "test":
             title = "Test received"
             detail = call.device.isEmpty ? "phone" : call.device

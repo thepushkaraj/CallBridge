@@ -49,6 +49,8 @@ class MainActivity : AppCompatActivity() {
     private var updateDialogShown = false
     private var updateApkReady = false
     private var activityResumed = false
+    private lateinit var smsSwitch: com.google.android.material.materialswitch.MaterialSwitch
+    private var pendingSmsEnable = false
 
     private val prefs by lazy { getSharedPreferences("callbridge", Context.MODE_PRIVATE) }
 
@@ -75,7 +77,16 @@ class MainActivity : AppCompatActivity() {
         }
 
     private val permissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { grants ->
+            if (pendingSmsEnable) {
+                pendingSmsEnable = false
+                val granted = grants[Manifest.permission.RECEIVE_SMS] == true
+                prefs.edit().putBoolean(SMS_ENABLED_KEY, granted).apply()
+                smsSwitch.isChecked = granted
+                if (!granted) {
+                    showTestStatus(getString(R.string.sms_permission_needed), ok = false)
+                }
+            }
             refreshStatus()
         }
 
@@ -119,6 +130,22 @@ class MainActivity : AppCompatActivity() {
             packageManager.getPackageInfo(packageName, 0).versionName
         } catch (e: Exception) {
             ""
+        }
+
+        smsSwitch = findViewById(R.id.sms_switch)
+        smsSwitch.isChecked = prefs.getBoolean(SMS_ENABLED_KEY, false)
+        smsSwitch.setOnCheckedChangeListener { _, checked ->
+            when {
+                !checked -> prefs.edit().putBoolean(SMS_ENABLED_KEY, false).apply()
+                ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) ==
+                    PackageManager.PERMISSION_GRANTED ->
+                    prefs.edit().putBoolean(SMS_ENABLED_KEY, true).apply()
+
+                else -> {
+                    pendingSmsEnable = true
+                    permissionLauncher.launch(arrayOf(Manifest.permission.RECEIVE_SMS))
+                }
+            }
         }
 
         // Visible version so sideloaded builds are always identifiable.
@@ -442,6 +469,7 @@ class MainActivity : AppCompatActivity() {
 
     private companion object {
         const val BATTERY_ASKED_KEY = "asked_battery_optimization"
+        const val SMS_ENABLED_KEY = "sms_enabled"
         val CALL_PERMISSIONS = arrayOf(
             Manifest.permission.READ_PHONE_STATE,
             Manifest.permission.READ_CALL_LOG,
