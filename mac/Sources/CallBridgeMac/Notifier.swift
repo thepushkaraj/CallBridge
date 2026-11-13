@@ -6,16 +6,11 @@ enum Notifier {
     enum Category {
         static let smsCode = "sms-code"
         static let smsPlain = "sms-plain"
-        // Replacement categories: the notification's own entry is swapped to
-        // these after a copy action, so the button reads "Copied ✓".
-        static let smsCodeCopied = "sms-code-copied"
-        static let smsPlainCopied = "sms-plain-copied"
     }
 
     enum Action {
         static let copyCode = "copy-code"
         static let copyMessage = "copy-message"
-        static let copied = "copied"
     }
 
     private static let center = UNUserNotificationCenter.current()
@@ -33,16 +28,6 @@ enum Notifier {
             UNNotificationCategory(
                 identifier: Category.smsPlain,
                 actions: [UNNotificationAction(identifier: Action.copyMessage, title: "Copy message")],
-                intentIdentifiers: []
-            ),
-            UNNotificationCategory(
-                identifier: Category.smsCodeCopied,
-                actions: [UNNotificationAction(identifier: Action.copied, title: "Copied ✓")],
-                intentIdentifiers: []
-            ),
-            UNNotificationCategory(
-                identifier: Category.smsPlainCopied,
-                actions: [UNNotificationAction(identifier: Action.copied, title: "Copied ✓")],
                 intentIdentifiers: []
             ),
         ])
@@ -75,12 +60,11 @@ enum Notifier {
             let text = call.body.isEmpty ? "(no text)" : call.body
             let code = OTPExtractor.extract(from: text)
             let category = code != nil ? Category.smsCode : Category.smsPlain
-            let title = "SMS from \(sender)"
             post(
-                title: title,
+                title: "SMS from \(sender)",
                 body: text,
                 category: category,
-                userInfo: ["body": text, "code": code ?? "", "title": title]
+                userInfo: ["body": text, "code": code ?? ""]
             )
         case "test":
             let name = call.device.isEmpty ? "your phone" : call.device
@@ -91,11 +75,9 @@ enum Notifier {
     }
 
     /// Runs when the user taps an action button on a notification.
-    static func handleAction(
-        _ actionIdentifier: String,
-        userInfo: [AnyHashable: Any],
-        requestIdentifier: String
-    ) {
+    /// Copies silently — no confirmation notification (macOS re-banners
+    /// same-identifier replacements, so any visual feedback would repeat).
+    static func handleAction(_ actionIdentifier: String, userInfo: [AnyHashable: Any]) {
         let isCode = actionIdentifier == Action.copyCode
         guard isCode || actionIdentifier == Action.copyMessage else { return }
 
@@ -112,19 +94,6 @@ enum Notifier {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(copied, forType: .string)
         appLog("Copied to clipboard: \(isCode ? "code \(copied)" : "message")")
-
-        // Swap the delivered notification in place (same identifier): the
-        // button reads "Copied ✓" instead of stacking a confirmation popup.
-        let title = info["title"] as? String ?? "SMS"
-        let newCategory = isCode ? Category.smsCodeCopied : Category.smsPlainCopied
-        post(
-            title: title,
-            body: body,
-            category: newCategory,
-            userInfo: info.merging(["copied": true]) { _, new in new },
-            sound: false,
-            identifier: requestIdentifier
-        )
     }
 
     // MARK: - Posting
@@ -134,18 +103,10 @@ enum Notifier {
         body: String,
         category: String? = nil,
         userInfo: [String: Any] = [:],
-        sound: Bool = true,
-        identifier: String = UUID().uuidString
+        sound: Bool = true
     ) {
         if usesUN {
-            postUN(
-                title: title,
-                body: body,
-                category: category,
-                userInfo: userInfo,
-                sound: sound,
-                identifier: identifier
-            )
+            postUN(title: title, body: body, category: category, userInfo: userInfo, sound: sound)
         } else {
             postOsascript(title: title, body: body, sound: sound)
         }
@@ -156,8 +117,7 @@ enum Notifier {
         body: String,
         category: String?,
         userInfo: [String: Any],
-        sound: Bool,
-        identifier: String
+        sound: Bool
     ) {
         let content = UNMutableNotificationContent()
         content.title = title
@@ -171,7 +131,7 @@ enum Notifier {
         if !userInfo.isEmpty {
             content.userInfo = userInfo
         }
-        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
         center.add(request) { error in
             if let error {
                 appLog("Failed to post notification: \(error.localizedDescription)")
@@ -273,11 +233,6 @@ final class NotifierDelegate: NSObject, UNUserNotificationCenterDelegate {
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
-        // The in-place "Copied ✓" replacement must never pop a fresh banner.
-        if notification.request.content.userInfo["copied"] as? Bool == true {
-            completionHandler([])
-            return
-        }
         // Respect per-notification sound choice.
         completionHandler(notification.request.content.sound != nil ? [.banner, .sound] : [.banner])
     }
@@ -287,11 +242,7 @@ final class NotifierDelegate: NSObject, UNUserNotificationCenterDelegate {
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        Notifier.handleAction(
-            response.actionIdentifier,
-            userInfo: response.notification.request.content.userInfo,
-            requestIdentifier: response.notification.request.identifier
-        )
+        Notifier.handleAction(response.actionIdentifier, userInfo: response.notification.request.content.userInfo)
         completionHandler()
     }
 }
