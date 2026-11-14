@@ -44,6 +44,16 @@
     <string name="scanner_close">Close scanner</string>
     <string name="scanner_torch">Toggle light</string>
 
+    <!-- App update -->
+    <string name="update_available_title">Update %1$s available</string>
+    <string name="update_available_message">A newer version of CallBridge is ready. It downloads in the background and then asks to install.</string>
+    <string name="update_action">Update</string>
+    <string name="update_later">Later</string>
+    <string name="update_downloading">Downloading update…</string>
+    <string name="update_download_title">CallBridge update</string>
+    <string name="update_download_description">New version download</string>
+    <string name="update_download_failed">Update download failed — try again later.</string>
+
     <string name="footer_wifi">Both devices must be on the same Wi-Fi network.</string>
 
     <!-- Background service -->

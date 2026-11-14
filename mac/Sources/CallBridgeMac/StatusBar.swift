@@ -2,10 +2,11 @@ import AppKit
 
 /// Menu bar presence: a small phone glyph that keeps the server reachable
 /// (Show window / Send test / Quit) even when the main window is closed.
-final class StatusBarManager: NSObject {
+final class StatusBarManager: NSObject, NSMenuDelegate {
     private let appState: AppState
     private let showWindow: () -> Void
     private var item: NSStatusItem?
+    private var updateMenuItem: NSMenuItem?
 
     init(appState: AppState, showWindow: @escaping () -> Void) {
         self.appState = appState
@@ -20,9 +21,20 @@ final class StatusBarManager: NSObject {
         }
 
         let menu = NSMenu()
+        menu.delegate = self
         let show = NSMenuItem(title: "Show CallBridge", action: #selector(showClicked), keyEquivalent: "")
         show.target = self
         menu.addItem(show)
+
+        let updateItem = NSMenuItem(
+            title: "Download update",
+            action: #selector(downloadUpdateClicked),
+            keyEquivalent: ""
+        )
+        updateItem.target = self
+        updateItem.isHidden = true
+        menu.addItem(updateItem)
+        self.updateMenuItem = updateItem
 
         let test = NSMenuItem(title: "Send test notification", action: #selector(testClicked), keyEquivalent: "")
         test.target = self
@@ -38,7 +50,19 @@ final class StatusBarManager: NSObject {
         self.item = item
     }
 
+    /// Reveals the update item only when a newer release was detected.
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        if let version = appState.availableUpdate {
+            updateMenuItem?.title = "Download update v\(version)"
+            updateMenuItem?.isHidden = false
+        } else {
+            updateMenuItem?.isHidden = true
+        }
+    }
+
     @objc private func showClicked() { showWindow() }
+
+    @objc private func downloadUpdateClicked() { appState.startUpdateDownload() }
 
     @objc private func testClicked() { appState.sendTestNotification() }
 

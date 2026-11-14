@@ -26,6 +26,19 @@ final class AppState: ObservableObject {
 
     private var server: CallServer?
 
+    // MARK: App update
+
+    enum UpdateDownloadState: Equatable {
+        case idle
+        case downloading(Double)
+        case ready
+    }
+
+    @Published private(set) var availableUpdate: String?
+    @Published private(set) var updateState: UpdateDownloadState = .idle
+    private var updateZipURL: URL?
+    private lazy var updateDownloader = UpdateDownloader()
+
     static let defaultsPortKey = "port"
     static let defaultsSecretKey = "secret"
     static let defaultPort: UInt16 = 8765
@@ -46,6 +59,34 @@ final class AppState: ObservableObject {
     }
 
     var isListening: Bool { serverState == .listening }
+
+    func checkForUpdates() {
+        MacUpdateCenter.check { [weak self] update in
+            guard let self, let update else { return }
+            if self.availableUpdate != update.version {
+                self.availableUpdate = update.version
+                self.updateZipURL = update.zipURL
+            }
+        }
+    }
+
+    /// Downloads when idle; installs the already-downloaded update when ready.
+    func startUpdateDownload() {
+        if updateState == .ready {
+            MacUpdateCenter.installDownloadedUpdate()
+            return
+        }
+        guard updateState == .idle, let zipURL = updateZipURL else { return }
+        updateState = .downloading(0)
+        updateDownloader.onProgress = { [weak self] fraction in
+            self?.updateState = .downloading(fraction)
+        }
+        updateDownloader.onComplete = { [weak self] zip in
+            guard let self else { return }
+            self.updateState = (zip != nil) ? .ready : .idle
+        }
+        updateDownloader.download(from: zipURL)
+    }
 
     /// Payload encoded into the QR code; nil when there is no address to pair with.
     var pairingPayload: PairingPayload? {

@@ -97,6 +97,8 @@ let app = NSApplication.shared
 let appState = AppState(portOverride: options.port, secretOverride: options.secret)
 Notifier.prepareForNotifications()
 appState.startServer()
+appState.checkForUpdates()
+
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let appState: AppState
@@ -129,9 +131,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.appearance = appearance
         }
 
-        let statusBar = StatusBarManager(appState: appState) { [weak self] in
-            self?.showWindow()
-        }
+        let statusBar = StatusBarManager(
+            appState: appState,
+            showWindow: { [weak self] in self?.showWindow() }
+        )
         statusBar.install()
         self.statusBar = statusBar
 

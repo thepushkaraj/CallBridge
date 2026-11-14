@@ -13,11 +13,25 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build CallBridge.app
-        run: ./make_app.sh release
+        env:
+          APP_VERSION: ${{ github.ref_name }}
+        run: |
+          APP_VERSION="${APP_VERSION#v}" ./make_app.sh release
         working-directory: mac
 
       - name: Zip app bundle
         run: ditto -c -k --keepParent build/CallBridge.app CallBridge-macOS.zip
+        working-directory: mac
+
+      - name: Generate Sparkle appcast
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          VERSION="${VERSION#v}" ./make_appcast.sh \
+            "${VERSION#v}" \
+            "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/CallBridge-macOS.zip" \
+            "CallBridge-macOS.zip" > appcast.xml
         working-directory: mac
 
       - name: Upload artifact (pull requests)
@@ -27,8 +41,10 @@ jobs:
           name: callbridge-macos
           path: mac/CallBridge-macOS.zip
 
-      - name: Attach app to release (tags)
+      - name: Attach app + appcast to release (tags)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: mac/CallBridge-macOS.zip
+          files: |
+            mac/CallBridge-macOS.zip
+            mac/appcast.xml
