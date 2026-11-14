@@ -106,14 +106,7 @@ struct AppView: View {
 
     private var header: some View {
         HStack(spacing: 12) {
-            RoundedRectangle(cornerRadius: 11, style: .continuous)
-                .fill(Color.primary.opacity(0.06))
-                .frame(width: 42, height: 42)
-                .overlay(
-                    Image(systemName: "phone.fill")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                )
+            LogomarkTile()
             VStack(alignment: .leading, spacing: 2) {
                 Text("CallBridge")
                     .font(.system(size: 20, weight: .bold))
@@ -241,6 +234,60 @@ struct AppView: View {
                 .foregroundStyle(.secondary)
         }
         .padding(.top, 8)
+    }
+}
+
+// MARK: - Logomark
+// The app icon's mark (two nodes + bridge arc), drawn as vectors so it
+// adapts to appearance: ink phone node, accent Mac node, gradient arc.
+
+struct LogomarkTile: View {
+    var body: some View {
+        RoundedRectangle(cornerRadius: 11, style: .continuous)
+            .fill(Color.primary.opacity(0.06))
+            .frame(width: 42, height: 42)
+            .overlay(Logomark().frame(width: 20, height: 20))
+    }
+}
+
+struct Logomark: View {
+    var body: some View {
+        ZStack {
+            BridgeArcShape()
+                .stroke(
+                    LinearGradient(
+                        colors: [Color.primary, Theme.accent],
+                        startPoint: .bottomLeading,
+                        endPoint: .topTrailing
+                    ),
+                    style: StrokeStyle(lineWidth: 2, lineCap: .round)
+                )
+            Circle()
+                .fill(Color.primary)
+                .frame(width: 5, height: 5)
+                .offset(x: -6.5, y: 6.5)
+            Circle()
+                .fill(Theme.accent)
+                .frame(width: 5, height: 5)
+                .offset(x: 6.5, y: -6.5)
+        }
+    }
+}
+
+/// The bridge arc in an 18×18 design space (y-down), bulging bottom-right.
+struct BridgeArcShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        Path { p in
+            p.move(to: CGPoint(x: 3.5, y: 14.5))
+            p.addQuadCurve(
+                to: CGPoint(x: 14.5, y: 3.5),
+                control: CGPoint(x: 14.5, y: 14.5)
+            )
+        }
+        .applying(CGAffineTransform(
+            scaleX: rect.width / 18,
+            y: rect.height / 18
+        ))
     }
 }
 
