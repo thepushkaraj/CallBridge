@@ -1,6 +1,18 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+}
+
+// Release signing: release.keystore lives outside git (gitignored). CI provides
+// it via a secret; local builds fall back to the debug signature.
+val releaseKeystoreFile = rootProject.file("release.keystore")
+val releaseKeystoreProperties = Properties().apply {
+    if (releaseKeystoreFile.exists()) {
+        load(FileInputStream(releaseKeystoreFile))
+    }
 }
 
 android {
@@ -13,6 +25,26 @@ android {
         targetSdk = 34
         versionCode = 8
         versionName = "0.3.0"
+    }
+
+    signingConfigs {
+        if (releaseKeystoreFile.exists()) {
+            create("release") {
+                storeFile = releaseKeystoreFile
+                storePassword = "callbridge2026"
+                keyAlias = "callbridge"
+                keyPassword = "callbridge2026"
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            if (releaseKeystoreFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+        }
     }
 
     compileOptions {
