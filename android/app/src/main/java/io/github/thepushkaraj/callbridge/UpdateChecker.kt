@@ -5,9 +5,8 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /**
- * Checks GitHub Releases for a newer version. Any failure (offline, repo not
- * published yet, rate limit) returns null and the app behaves as before —
- * the update check is the app's only internet call.
+ * Checks GitHub Releases for a newer version. The check is the app's only
+ * internet call; failures are reported so manual checks can surface them.
  */
 object UpdateChecker {
     private const val REPO = "thepushkaraj/CallBridge"
@@ -16,23 +15,32 @@ object UpdateChecker {
 
     data class Update(val version: String, val apkUrl: String)
 
-    fun check(currentVersionName: String): Update? {
+    sealed class CheckResult {
+        data class Available(val update: Update) : CheckResult()
+        /** 200 with nothing newer, or the repo has no published releases yet. */
+        object UpToDate : CheckResult()
+        /** Network error or unexpected response. */
+        object Failed : CheckResult()
+    }
+
+    fun check(currentVersionName: String): CheckResult {
         return try {
             val connection = URL(API).openConnection() as HttpURLConnection
             connection.connectTimeout = TIMEOUT_MS
             connection.readTimeout = TIMEOUT_MS
             connection.setRequestProperty("Accept", "application/vnd.github+json")
 
-            val body = if (connection.responseCode == 200) {
-                connection.inputStream.bufferedReader().use { it.readText() }
-            } else {
+            val status = connection.responseCode
+            if (status == 404) return CheckResult.UpToDate // no releases published yet
+            if (status != 200) {
                 connection.disconnect()
-                return null
+                return CheckResult.Failed
             }
 
+            val body = connection.inputStream.bufferedReader().use { it.readText() }
             val root = JSONObject(body)
             val tag = root.optString("tag_name").removePrefix("v")
-            val assets = root.optJSONArray("assets") ?: return null
+            val assets = root.optJSONArray("assets") ?: return CheckResult.UpToDate
 
             var apkUrl: String? = null
             for (i in 0 until assets.length()) {
@@ -43,10 +51,11 @@ object UpdateChecker {
                 }
             }
 
-            val url = apkUrl ?: return null
-            if (isNewer(tag, currentVersionName)) Update(version = tag, apkUrl = url) else null
+            val url = apkUrl ?: return CheckResult.UpToDate
+            val update = Update(version = tag, apkUrl = url)
+            if (isNewer(tag, currentVersionName)) CheckResult.Available(update) else CheckResult.UpToDate
         } catch (e: Exception) {
-            null
+            CheckResult.Failed
         }
     }
 

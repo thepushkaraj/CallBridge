@@ -12,6 +12,12 @@ enum MacUpdateCenter {
         let zipURL: URL
     }
 
+    enum CheckOutcome {
+        case upToDate                    // 200 with no newer release, or no releases published yet
+        case available(Update)
+        case failed                      // network error or unexpected response
+    }
+
     /// Semantic compare of dotted versions, e.g. 0.3.0 vs 0.2.2.
     static func isNewer(_ candidate: String, than current: String) -> Bool {
         func parts(_ v: String) -> [Int] {
@@ -33,26 +39,29 @@ enum MacUpdateCenter {
     }
 
     /// Fetches the latest release info; completion runs on the main queue.
-    static func check(completion: @escaping (Update?) -> Void) {
+    static func check(completion: @escaping (CheckOutcome) -> Void) {
         // CALLBRIDGE_UPDATE_API overrides the endpoint for local testing or a
         // self-hosted manifest; the manifest is GitHub-Releases-shaped JSON.
         let endpoint = ProcessInfo.processInfo.environment["CALLBRIDGE_UPDATE_API"] ?? api
-        FileHandle.standardError.write(Data("[update] checking endpoint: \(endpoint)\n".utf8))
         guard let url = URL(string: endpoint) else {
-            DispatchQueue.main.async { completion(nil) }
+            DispatchQueue.main.async { completion(.failed) }
             return
         }
         var request = URLRequest(url: url)
         request.timeoutInterval = 10
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
         URLSession.shared.dataTask(with: request) { data, response, _ in
-            var update: Update?
-            defer { DispatchQueue.main.async { completion(update) } }
+            var outcome = CheckOutcome.failed
+            defer { DispatchQueue.main.async { completion(outcome) } }
+
             let status = (response as? HTTPURLResponse)?.statusCode ?? -1
-            FileHandle.standardError.write(Data("[update] http status: \(status)\n".utf8))
+            guard status == 200, let data else {
+                // 404 = the repo has no published releases yet; the running
+                // install is then the newest that exists.
+                outcome = (status == 404) ? .upToDate : .failed
+                return
+            }
             guard
-                let data,
-                status == 200,
                 let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                 let tag = root["tag_name"] as? String
             else { return }
@@ -60,15 +69,20 @@ enum MacUpdateCenter {
             let version = tag.hasPrefix("v") ? String(tag.dropFirst()) : tag
             guard isNewer(version, than: currentVersion()),
                   let assets = root["assets"] as? [[String: Any]]
-            else { return }
+            else {
+                outcome = .upToDate
+                return
+            }
 
             let zip = assets.first {
                 ($0["name"] as? String)?.hasSuffix(".zip") == true
             }.flatMap { $0["browser_download_url"] as? String }
-            FileHandle.standardError.write(Data("[update] tag=\(tag) newer=\(isNewer(version, than: currentVersion())) zip=\(zip ?? "none")\n".utf8))
-            guard let zipURLString = zip, let zipURL = URL(string: zipURLString) else { return }
+            guard let zipURLString = zip, let zipURL = URL(string: zipURLString) else {
+                outcome = .upToDate
+                return
+            }
 
-            update = Update(version: version, zipURL: zipURL)
+            outcome = .available(Update(version: version, zipURL: zipURL))
         }.resume()
     }
 

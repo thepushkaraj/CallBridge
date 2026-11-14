@@ -19,6 +19,11 @@ enum Notifier {
         }
     }
 
+    /// Silent, informational notice (no sound) — e.g. manual update-check results.
+    static func showNotice(title: String, body: String) {
+        post(title: title, body: body, sound: false)
+    }
+
     static func handle(_ call: IncomingCall) {
         switch call.event {
         case "ringing":
@@ -34,19 +39,21 @@ enum Notifier {
         }
     }
 
-    private static func post(title: String, body: String) {
+    private static func post(title: String, body: String, sound: Bool = true) {
         if usesUN {
-            postUN(title: title, body: body)
+            postUN(title: title, body: body, sound: sound)
         } else {
-            postOsascript(title: title, body: body)
+            postOsascript(title: title, body: body, sound: sound)
         }
     }
 
-    private static func postUN(title: String, body: String) {
+    private static func postUN(title: String, body: String, sound: Bool) {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
-        content.sound = .default
+        if sound {
+            content.sound = .default
+        }
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
         center.add(request) { error in
             if let error {
@@ -56,9 +63,10 @@ enum Notifier {
         }
     }
 
-    private static func postOsascript(title: String, body: String) {
+    private static func postOsascript(title: String, body: String, sound: Bool = true) {
+        let soundPart = sound ? " sound name \"Glass\"" : ""
         let script =
-            "display notification \"\(escaped(body))\" with title \"\(escaped(title))\" sound name \"Glass\""
+            "display notification \"\(escaped(body))\" with title \"\(escaped(title))\"\(soundPart)"
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
         task.arguments = ["-e", script]

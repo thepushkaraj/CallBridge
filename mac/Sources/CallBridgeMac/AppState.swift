@@ -36,6 +36,8 @@ final class AppState: ObservableObject {
 
     @Published private(set) var availableUpdate: String?
     @Published private(set) var updateState: UpdateDownloadState = .idle
+    @Published private(set) var isCheckingForUpdates = false
+    @Published private(set) var upToDateNotice = false
     private var updateZipURL: URL?
     private lazy var updateDownloader = UpdateDownloader()
 
@@ -60,13 +62,49 @@ final class AppState: ObservableObject {
 
     var isListening: Bool { serverState == .listening }
 
-    func checkForUpdates() {
-        MacUpdateCenter.check { [weak self] update in
-            guard let self, let update else { return }
-            if self.availableUpdate != update.version {
-                self.availableUpdate = update.version
-                self.updateZipURL = update.zipURL
+    /// Manual checks surface feedback (notice/banner); launch checks stay
+    /// silent when there's no update.
+    func checkForUpdates(manual: Bool = false) {
+        guard !isCheckingForUpdates else { return }
+        isCheckingForUpdates = true
+        MacUpdateCenter.check { [weak self] outcome in
+            guard let self else { return }
+            self.isCheckingForUpdates = false
+            switch outcome {
+            case .available(let update):
+                if self.availableUpdate != update.version {
+                    self.availableUpdate = update.version
+                    self.updateZipURL = update.zipURL
+                }
+                if manual {
+                    Notifier.showNotice(
+                        title: "Update available",
+                        body: "Version \(update.version) is ready to download in CallBridge."
+                    )
+                }
+            case .upToDate:
+                if manual {
+                    self.flashUpToDate()
+                    Notifier.showNotice(
+                        title: "You're up to date",
+                        body: "CallBridge v\(MacUpdateCenter.currentVersion()) is the latest version."
+                    )
+                }
+            case .failed:
+                if manual {
+                    Notifier.showNotice(
+                        title: "Couldn't check for updates",
+                        body: "The update check failed. Try again later."
+                    )
+                }
             }
+        }
+    }
+
+    private func flashUpToDate() {
+        upToDateNotice = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+            self.upToDateNotice = false
         }
     }
 
