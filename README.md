@@ -1,4 +1,4 @@
-<p align="center">
+<p align="left">
   <img src="docs/logo.png" width="128" height="128" alt="CallBridge Logo" />
 </p>
 
@@ -71,15 +71,6 @@ Honest about what this is: LAN-only, plaintext HTTP, optional shared
 secret header (`X-CallBridge-Secret`). It is designed for home networks,
 not hostile ones. Nothing is stored, logged, or sent anywhere except your
 own Mac.
-
-## Roadmap
-
-- [x] v0.1 — ringing notifications, manual IP entry
-- [x] Mac `.app` with QR-code pairing *(this release)*
-- [ ] Missed-call events
-- [ ] mDNS auto-discovery (no manual IP entry)
-- [ ] Signed DMG + APK releases
-- [ ] Windows / Linux listeners speaking the same protocol
 
 ## Contributing
 
