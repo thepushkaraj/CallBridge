@@ -1,14 +1,18 @@
 package io.github.thepushkaraj.callbridge
 
 import android.Manifest
+import android.app.DownloadManager
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Typeface
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.os.PowerManager
 import android.provider.Settings
 import android.view.View
@@ -16,6 +20,9 @@ import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import java.io.File
 import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
@@ -32,8 +39,38 @@ class MainActivity : AppCompatActivity() {
     private lateinit var manualToggle: com.google.android.material.button.MaterialButton
     private lateinit var oemHintCard: View
     private lateinit var oemHintText: TextView
+    private var appVersionName = ""
+    private var pendingUpdate: UpdateChecker.Update? = null
+    private var downloadId = -1L
 
     private val prefs by lazy { getSharedPreferences("callbridge", Context.MODE_PRIVATE) }
+
+    private val unknownSourcesLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            val update = pendingUpdate
+            if (update != null && packageManager.canRequestPackageInstalls()) {
+                pendingUpdate = null
+                enqueueUpdateDownload(update.apkUrl)
+            }
+        }
+
+    private val downloadCompleteReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action != DownloadManager.ACTION_DOWNLOAD_COMPLETE) return
+            val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+            if (id != downloadId) return
+            val manager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            val cursor = manager.query(DownloadManager.Query().setFilterById(id))
+            cursor?.use {
+                val status = it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+                if (it.moveToFirst() && status == DownloadManager.STATUS_SUCCESSFUL) {
+                    openUpdateInstaller()
+                } else {
+                    showTestStatus(getString(R.string.update_download_failed), ok = false)
+                }
+            }
+        }
+    }
 
     private val scannerLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -86,13 +123,8 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.test_button).setOnClickListener { sendTest() }
 
         // Visible version so sideloaded builds are always identifiable.
-        val versionName = try {
-            packageManager.getPackageInfo(packageName, 0).versionName
-        } catch (e: Exception) {
-            ""
-        }
         findViewById<TextView>(R.id.footer_text).text =
-            getString(R.string.footer_wifi) + "  ·  v" + versionName
+            getString(R.string.footer_wifi) + "  ·  v" + appVersionName
 
         statusRow.setOnClickListener {
             if (!hasCallPermissions()) requestCallPermissions()
@@ -103,11 +135,27 @@ class MainActivity : AppCompatActivity() {
         requestIgnoreBatteryOptimizationsOnce()
         WatchService.start(this)
 
+        appVersionName = try {
+            packageManager.getPackageInfo(packageName, 0).versionName
+        } catch (e: Exception) {
+            ""
+        }
+        registerReceiver(
+            downloadCompleteReceiver,
+            IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+        )
+        checkForAppUpdate()
+
         if (hasCallPermissions()) {
             refreshStatus()
         } else {
             requestCallPermissions()
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(downloadCompleteReceiver)
     }
 
     override fun onResume() {
@@ -237,6 +285,57 @@ class MainActivity : AppCompatActivity() {
                     .setData(Uri.parse("package:$packageName"))
             )
         }
+    }
+
+    // MARK: App update
+
+    private fun checkForAppUpdate() {
+        thread {
+            val update = UpdateChecker.check(appVersionName)
+            if (update != null) {
+                runOnUiThread {
+                    if (isFinishing || isDestroyed) return@runOnUiThread
+                    MaterialAlertDialogBuilder(this)
+                        .setTitle(getString(R.string.update_available_title, update.version))
+                        .setMessage(getString(R.string.update_available_message))
+                        .setPositiveButton(getString(R.string.update_action)) { _, _ -> startUpdate(update) }
+                        .setNegativeButton(getString(R.string.update_later), null)
+                        .show()
+                }
+            }
+        }
+    }
+
+    private fun startUpdate(update: UpdateChecker.Update) {
+        if (!packageManager.canRequestPackageInstalls()) {
+            pendingUpdate = update
+            unknownSourcesLauncher.launch(
+                Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES)
+                    .setData(Uri.parse("package:$packageName"))
+            )
+            return
+        }
+        enqueueUpdateDownload(update.apkUrl)
+    }
+
+    private fun enqueueUpdateDownload(apkUrl: String) {
+        val request = DownloadManager.Request(Uri.parse(apkUrl))
+            .setTitle(getString(R.string.update_download_title))
+            .setDescription(getString(R.string.update_download_description))
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            .setDestinationInExternalFilesDir(this, Environment.DIRECTORY_DOWNLOADS, "CallBridge-update.apk")
+        val manager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        downloadId = manager.enqueue(request)
+        showTestStatus(getString(R.string.update_downloading), ok = null)
+    }
+
+    private fun openUpdateInstaller() {
+        val apk = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "CallBridge-update.apk")
+        val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", apk)
+        val install = Intent(Intent.ACTION_VIEW)
+            .setDataAndType(uri, "application/vnd.android.package-archive")
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(install)
     }
 
     private fun showOemHintIfNeeded() {

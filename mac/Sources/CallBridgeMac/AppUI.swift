@@ -55,6 +55,11 @@ struct AppView: View {
                 .padding(.top, 18)
                 .padding(.bottom, 22)
 
+            if state.availableUpdate != nil {
+                UpdateBanner()
+                    .padding(.bottom, 20)
+            }
+
             if notificationsDenied {
                 warningRow(
                     icon: "bell.slash.fill",
@@ -273,6 +278,66 @@ struct BridgeArcShape: Shape {
             scaleX: rect.width / 18,
             y: rect.height / 18
         ))
+    }
+}
+
+// MARK: - Update banner
+// Slim always-visible row when a newer release exists: Download → progress
+// percentage → Restart to update (swaps the bundle and relaunches).
+
+private struct UpdateBanner: View {
+    @EnvironmentObject private var state: AppState
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "arrow.down.circle.fill")
+                .font(.system(size: 18))
+                .foregroundStyle(Theme.accent)
+            VStack(alignment: .leading, spacing: 1) {
+                if let version = state.availableUpdate {
+                    Text("Update available · v\(version)")
+                        .font(.callout.weight(.semibold))
+                }
+                Text(caption)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 8)
+            Button {
+                state.startUpdateDownload()
+            } label: {
+                Text(buttonLabel)
+                    .font(.system(size: 12, weight: .semibold))
+            }
+            .buttonStyle(NeutralProminentButtonStyle(compact: true))
+            .disabled(isDownloading)
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Theme.accent.opacity(0.12))
+        )
+    }
+
+    private var isDownloading: Bool {
+        if case .downloading = state.updateState { return true }
+        return false
+    }
+
+    private var caption: String {
+        switch state.updateState {
+        case .downloading(let fraction): return "Downloading… \(Int(fraction * 100))%"
+        case .ready: return "Download complete — restart to finish the update"
+        default: return "Download and install the latest version"
+        }
+    }
+
+    private var buttonLabel: String {
+        switch state.updateState {
+        case .downloading(let fraction): return "\(Int(fraction * 100))%"
+        case .ready: return "Restart to update"
+        default: return "Download"
+        }
     }
 }
 
