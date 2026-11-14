@@ -105,8 +105,7 @@ struct AppView: View {
     // MARK: Header
 
     private var header: some View {
-        HStack(spacing: 12) {
-            LogomarkTile()
+        HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("CallBridge")
                     .font(.system(size: 20, weight: .bold))
@@ -239,16 +238,8 @@ struct AppView: View {
 
 // MARK: - Logomark
 // The app icon's mark (two nodes + bridge arc), drawn as vectors so it
-// adapts to appearance: ink phone node, accent Mac node, gradient arc.
-
-struct LogomarkTile: View {
-    var body: some View {
-        RoundedRectangle(cornerRadius: 11, style: .continuous)
-            .fill(Color.primary.opacity(0.06))
-            .frame(width: 42, height: 42)
-            .overlay(Logomark().frame(width: 24, height: 24))
-    }
-}
+// adapts to appearance. Not used in the main window (the header is pure
+// typography); kept for future surfaces like an About pane.
 
 struct Logomark: View {
     var body: some View {
