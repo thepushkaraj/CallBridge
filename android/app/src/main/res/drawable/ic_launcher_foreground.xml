@@ -5,17 +5,19 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Bridge arc: white → accent gradient along the path (phone → Mac) -->
+    <!-- Bridge arc: white → accent gradient along the path (phone → Mac).
+         The mark spans ~80% of the visible mask so it never touches the
+         launcher's edges and never clips the 66dp safe circle. -->
     <path
-        android:pathData="M33,75 Q75,75 75,33"
+        android:pathData="M40,68 Q68,68 68,40"
         android:strokeLineCap="round"
         android:strokeWidth="5.5">
         <aapt:attr name="android:strokeColor">
             <gradient
-                android:endX="75"
-                android:endY="33"
-                android:startX="33"
-                android:startY="75"
+                android:endX="68"
+                android:endY="40"
+                android:startX="40"
+                android:startY="68"
                 android:type="linear">
                 <item
                     android:color="#F2F4F2"
@@ -28,8 +30,8 @@
     </path>
     <path
         android:fillColor="#F2F4F2"
-        android:pathData="M33,75 m-8.5,0 a8.5,8.5 0 1,1 17,0 a8.5,8.5 0 1,1 -17,0" />
+        android:pathData="M40,68 m-8.5,0 a8.5,8.5 0 1,1 17,0 a8.5,8.5 0 1,1 -17,0" />
     <path
         android:fillColor="#4CC38A"
-        android:pathData="M75,33 m-8.5,0 a8.5,8.5 0 1,1 17,0 a8.5,8.5 0 1,1 -17,0" />
+        android:pathData="M68,40 m-8.5,0 a8.5,8.5 0 1,1 17,0 a8.5,8.5 0 1,1 -17,0" />
 </vector>
