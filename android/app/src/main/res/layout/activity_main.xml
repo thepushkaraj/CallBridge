@@ -108,7 +108,7 @@
                         android:layout_gravity="center"
                         android:contentDescription="@string/pair_title"
                         android:src="@drawable/ic_qr"
-                        app:tint="?attr/colorOnPrimaryContainer" />
+                        app:tint="?attr/colorOnSurfaceVariant" />
                 </FrameLayout>
 
                 <TextView
@@ -164,7 +164,7 @@
                             android:gravity="center"
                             android:includeFontPadding="false"
                             android:text="@string/step_one"
-                            android:textColor="?attr/colorOnPrimaryContainer"
+                            android:textColor="?attr/colorOnSurfaceVariant"
                             android:textSize="13sp"
                             android:textStyle="bold" />
 
@@ -192,7 +192,7 @@
                             android:gravity="center"
                             android:includeFontPadding="false"
                             android:text="@string/step_two"
-                            android:textColor="?attr/colorOnPrimaryContainer"
+                            android:textColor="?attr/colorOnSurfaceVariant"
                             android:textSize="13sp"
                             android:textStyle="bold" />
 
@@ -220,7 +220,7 @@
                             android:gravity="center"
                             android:includeFontPadding="false"
                             android:text="@string/step_three"
-                            android:textColor="?attr/colorOnPrimaryContainer"
+                            android:textColor="?attr/colorOnSurfaceVariant"
                             android:textSize="13sp"
                             android:textStyle="bold" />
 

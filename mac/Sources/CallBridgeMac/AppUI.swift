@@ -1,19 +1,17 @@
 import SwiftUI
 
-// A restrained palette: system backgrounds, graphite text, one muted green accent.
+// A restrained palette: grays carry the layout; the green accent appears only
+// where it means something (the primary action, the ready-state dot).
 // The QR stays on pure white in every appearance so cameras can always read it.
 enum Theme {
     static let accent = Color(nsColor: NSColor(name: nil) { appearance in
         appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
-            ? NSColor(srgbRed: 0.37, green: 0.78, blue: 0.58, alpha: 1)
+            ? NSColor(srgbRed: 0.33, green: 0.74, blue: 0.55, alpha: 1)
             : NSColor(srgbRed: 0.10, green: 0.52, blue: 0.37, alpha: 1)
     })
 
-    static let accentSoft = Color(nsColor: NSColor(name: nil) { appearance in
-        appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
-            ? NSColor(srgbRed: 0.13, green: 0.28, blue: 0.21, alpha: 1)
-            : NSColor(srgbRed: 0.86, green: 0.94, blue: 0.90, alpha: 1)
-    })
+    static let neutralTile = Color.primary.opacity(0.06)
+    static let neutralStroke = Color.primary.opacity(0.12)
 
     static let warning = Color(nsColor: NSColor(name: nil) { appearance in
         appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
@@ -101,12 +99,12 @@ struct AppView: View {
     private var header: some View {
         HStack(spacing: 12) {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Theme.accentSoft)
+                .fill(Theme.neutralTile)
                 .frame(width: 44, height: 44)
                 .overlay(
                     Image(systemName: "phone.fill")
                         .font(.system(size: 19, weight: .semibold))
-                        .foregroundStyle(Theme.accent)
+                        .foregroundStyle(.secondary)
                 )
             VStack(alignment: .leading, spacing: 1) {
                 Text("CallBridge")
@@ -128,24 +126,22 @@ struct AppView: View {
     }
 
     private var statusPill: some View {
-        let (dot, label, soft): (Color, String, Color) = {
+        let (dot, label): (Color, String) = {
             switch state.serverState {
             case .listening:
-                return (Theme.accent, "Ready", Theme.accentSoft)
+                return (Theme.accent, "Ready")
             case .starting:
-                return (Color.secondary, "Starting…", Color.primary.opacity(0.06))
+                return (Color.secondary, "Starting…")
             case .failed:
-                return (Color(nsColor: .systemRed), "Not listening", Color(nsColor: .systemRed).opacity(0.12))
+                return (Color(nsColor: .systemRed), "Not listening")
             }
         }()
         return HStack(spacing: 6) {
             Circle().fill(dot).frame(width: 7, height: 7)
             Text(label)
                 .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(.secondary)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 4)
-        .background(Capsule().fill(soft))
         .fixedSize()
     }
 
@@ -187,10 +183,10 @@ struct AppView: View {
     private func step(_ number: Int, _ text: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
             Text("\(number)")
-                .font(.system(size: 12, weight: .bold).monospacedDigit())
-                .foregroundStyle(Theme.accent)
+                .font(.system(size: 12, weight: .semibold).monospacedDigit())
+                .foregroundStyle(.secondary)
                 .frame(width: 22, height: 22)
-                .background(Circle().fill(Theme.accentSoft))
+                .background(Circle().strokeBorder(Theme.neutralStroke, lineWidth: 1))
                 .offset(y: 2)
             Text(text)
                 .font(.callout)
@@ -203,12 +199,12 @@ struct AppView: View {
     private func lastEventRow(_ event: AppState.LastEvent) -> some View {
         HStack(spacing: 10) {
             Image(systemName: event.title == "Ringing" ? "phone.arrow.down.left.fill" : "checkmark.circle.fill")
-                .font(.system(size: 13))
-                .foregroundStyle(event.title == "Ringing" ? Theme.warning : Theme.accent)
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
                 .frame(width: 26, height: 26)
                 .background(
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(event.title == "Ringing" ? Theme.warning.opacity(0.14) : Theme.accentSoft)
+                        .fill(Theme.neutralTile)
                 )
             Text(event.detail.isEmpty ? event.title : "\(event.title) · \(event.detail)")
                 .font(.callout)
