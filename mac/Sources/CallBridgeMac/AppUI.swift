@@ -246,30 +246,33 @@ struct LogomarkTile: View {
         RoundedRectangle(cornerRadius: 11, style: .continuous)
             .fill(Color.primary.opacity(0.06))
             .frame(width: 42, height: 42)
-            .overlay(Logomark().frame(width: 20, height: 20))
+            .overlay(Logomark().frame(width: 24, height: 24))
     }
 }
 
 struct Logomark: View {
     var body: some View {
-        ZStack {
-            BridgeArcShape()
-                .stroke(
-                    LinearGradient(
-                        colors: [Color.primary, Theme.accent],
-                        startPoint: .bottomLeading,
-                        endPoint: .topTrailing
-                    ),
-                    style: StrokeStyle(lineWidth: 2, lineCap: .round)
-                )
-            Circle()
-                .fill(Color.primary)
-                .frame(width: 5, height: 5)
-                .offset(x: -6.5, y: 6.5)
-            Circle()
-                .fill(Theme.accent)
-                .frame(width: 5, height: 5)
-                .offset(x: 6.5, y: -6.5)
+        GeometryReader { geo in
+            let unit = min(geo.size.width, geo.size.height) / 18
+            ZStack {
+                BridgeArcShape()
+                    .stroke(
+                        LinearGradient(
+                            colors: [Color.primary, Theme.accent],
+                            startPoint: .bottomLeading,
+                            endPoint: .topTrailing
+                        ),
+                        style: StrokeStyle(lineWidth: 1.55 * unit, lineCap: .round)
+                    )
+                Circle()
+                    .fill(Color.primary)
+                    .frame(width: 6.5 * unit, height: 6.5 * unit)
+                    .position(x: 4 * unit, y: 14 * unit)
+                Circle()
+                    .fill(Theme.accent)
+                    .frame(width: 6.5 * unit, height: 6.5 * unit)
+                    .position(x: 14 * unit, y: 4 * unit)
+            }
         }
     }
 }
@@ -278,10 +281,10 @@ struct Logomark: View {
 struct BridgeArcShape: Shape {
     func path(in rect: CGRect) -> Path {
         Path { p in
-            p.move(to: CGPoint(x: 3.5, y: 14.5))
+            p.move(to: CGPoint(x: 4, y: 14))
             p.addQuadCurve(
-                to: CGPoint(x: 14.5, y: 3.5),
-                control: CGPoint(x: 14.5, y: 14.5)
+                to: CGPoint(x: 14, y: 4),
+                control: CGPoint(x: 14, y: 14)
             )
         }
         .applying(CGAffineTransform(
