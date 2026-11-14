@@ -71,8 +71,8 @@ struct AppView: View {
                         .padding(.bottom, 20)
                 }
 
-                sectionLabel("Pair your phone")
                 PairingSection(payload: state.pairingPayload, ip: state.selectedIP)
+                    .padding(.top, 4)
                     .padding(.bottom, 24)
 
                 if let event = state.lastEvent {
@@ -169,15 +169,6 @@ struct AppView: View {
             .foregroundStyle(.tertiary)
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity)
-    }
-
-    private func sectionLabel(_ text: String) -> some View {
-        Text(text)
-            .font(.system(size: 11, weight: .semibold))
-            .tracking(0.6)
-            .foregroundStyle(.secondary)
-            .padding(.leading, 2)
-            .padding(.bottom, 10)
     }
 
     private func warningRow(icon: String, text: String) -> some View {
