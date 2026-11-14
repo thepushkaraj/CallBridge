@@ -13,22 +13,47 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <TextView
-        android:id="@+id/scanner_caption"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="top|center_horizontal"
-        android:layout_marginTop="104dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"
-        android:background="@drawable/bg_scrim_pill"
-        android:paddingStart="18dp"
-        android:paddingEnd="18dp"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp"
-        android:text="@string/scanner_title"
-        android:textColor="#FFFFFF"
-        android:textSize="14sp" />
+        android:layout_gravity="top"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginTop="44dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <FrameLayout
+            android:id="@+id/close_button"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_circle_scrim"
+            android:contentDescription="@string/scanner_close">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_close"
+                android:tint="#FFFFFF" />
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/scanner_caption"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_scrim_pill"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:text="@string/scanner_title"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/scanner_error"
@@ -47,25 +72,6 @@
         android:textColor="#FFFFFF"
         android:textSize="13sp"
         android:visibility="gone" />
-
-    <FrameLayout
-        android:id="@+id/close_button"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
-        android:layout_gravity="top|start"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="44dp"
-        android:background="@drawable/bg_circle_scrim"
-        android:contentDescription="@string/scanner_close">
-
-        <ImageView
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_gravity="center"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_close"
-            android:tint="#FFFFFF" />
-    </FrameLayout>
 
     <FrameLayout
         android:id="@+id/torch_button"
