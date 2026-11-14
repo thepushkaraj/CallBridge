@@ -72,6 +72,30 @@ secret header (`X-CallBridge-Secret`). It is designed for home networks,
 not hostile ones. Nothing is stored, logged, or sent anywhere except your
 own Mac.
 
+## Releases
+
+Prebuilt binaries are attached to every [GitHub release](https://github.com/thepushkaraj/CallBridge/releases):
+
+- **Android**: `CallBridge-vX.Y.Z.apk` — sideload it (Android asks to allow installs from your browser once)
+- **macOS**: `CallBridge-macOS.zip` — unzip, drag to Applications, right-click → **Open** on first launch (unsigned binary)
+
+Already installed? The app checks GitHub on launch and offers the update in-app — or use **Check for updates** in the app. ([latest release](https://github.com/thepushkaraj/CallBridge/releases/latest))
+
+| Release | Highlights |
+|---|---|
+| [v0.3.0](https://github.com/thepushkaraj/CallBridge/releases/tag/v0.3.0) | In-app auto-updater, manual update checks, release-signed Android builds |
+| [v0.2.0](https://github.com/thepushkaraj/CallBridge/releases/tag/v0.2.0) | QR-code pairing, Material redesign, new app identity |
+| [v0.1.0](https://github.com/thepushkaraj/CallBridge/releases/tag/v0.1.0) | Call notifications to your Mac |
+
+## Roadmap
+
+- [x] v0.1 — ringing notifications, manual IP entry
+- [x] Mac `.app` with QR-code pairing *(this release)*
+- [ ] Missed-call events
+- [ ] mDNS auto-discovery (no manual IP entry)
+- [ ] Signed DMG + APK releases
+- [ ] Windows / Linux listeners speaking the same protocol
+
 ## Contributing
 
 Start with [PROTOCOL.md](PROTOCOL.md) — the whole spec is one JSON blob.
