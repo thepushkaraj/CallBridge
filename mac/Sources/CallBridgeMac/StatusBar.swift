@@ -16,14 +16,7 @@ final class StatusBarManager: NSObject {
     func install() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = item.button {
-            let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .medium)
-            button.image = NSImage(
-                systemSymbolName: "iphone.radiowaves.left.and.right",
-                accessibilityDescription: "CallBridge"
-            )?.withSymbolConfiguration(config)
-            if button.image == nil {
-                button.title = "CB"
-            }
+            button.image = Self.makeMenuIcon()
         }
 
         let menu = NSMenu()
@@ -50,4 +43,25 @@ final class StatusBarManager: NSObject {
     @objc private func testClicked() { appState.sendTestNotification() }
 
     @objc private func quitClicked() { NSApp.terminate(nil) }
+
+    /// The two-nodes-+-arc mark as a template image, so the menu bar tints it
+    /// for light/dark appearance.
+    private static func makeMenuIcon() -> NSImage {
+        let size = NSSize(width: 18, height: 18)
+        let image = NSImage(size: size, flipped: false) { _ in
+            guard let context = NSGraphicsContext.current?.cgContext else { return false }
+            context.setLineWidth(2)
+            context.setLineCap(.round)
+            let path = CGMutablePath()
+            path.move(to: CGPoint(x: 3.5, y: 3.5))
+            path.addQuadCurve(to: CGPoint(x: 14.5, y: 14.5), control: CGPoint(x: 14.5, y: 3.5))
+            context.addPath(path)
+            context.strokePath()
+            context.fillEllipse(in: CGRect(x: 1, y: 1, width: 5, height: 5))
+            context.fillEllipse(in: CGRect(x: 12, y: 12, width: 5, height: 5))
+            return true
+        }
+        image.isTemplate = true
+        return image
+    }
 }

@@ -20,6 +20,25 @@ enum Theme {
     static let hairline = Color.primary.opacity(0.08)
 }
 
+/// The primary action: neutral-prominent (near-black in light mode, near-white
+/// in dark). Color is reserved for meaning — this button deliberately has none.
+private struct NeutralProminentButtonStyle: ButtonStyle {
+    var compact = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: compact ? 12 : 13, weight: .semibold))
+            .padding(.horizontal, compact ? 12 : 14)
+            .padding(.vertical, compact ? 6 : 9)
+            .frame(maxWidth: compact ? nil : .infinity)
+            .foregroundStyle(Color(nsColor: .controlBackgroundColor))
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(Color.primary.opacity(configuration.isPressed ? 0.75 : 1))
+            )
+    }
+}
+
 // MARK: - Root
 
 struct AppView: View {
@@ -53,11 +72,11 @@ struct AppView: View {
                 }
 
                 sectionLabel("Pair your phone")
-                pairingSection
+                PairingSection(payload: state.pairingPayload, ip: state.selectedIP)
                     .padding(.bottom, 24)
 
                 if let event = state.lastEvent {
-                    lastEventRow(event)
+                    LastEventRow(event: event)
                         .padding(.bottom, 20)
                 }
 
@@ -135,67 +154,6 @@ struct AppView: View {
         .fixedSize()
     }
 
-    // MARK: Pairing
-
-    private var pairingSection: some View {
-        VStack(spacing: 18) {
-            if let payload = state.pairingPayload, let image = QRCode.image(for: payload.jsonString) {
-                Image(nsImage: image)
-                    .resizable()
-                    .interpolation(.none)
-                    .scaledToFit()
-                    .frame(width: 222, height: 222)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color.white)
-                            .shadow(color: .black.opacity(0.14), radius: 5, y: 2)
-                    )
-                    .accessibilityLabel("Pairing QR code for \(state.selectedIP) port \(state.port)")
-            }
-
-            Text("Scan with CallBridge on your Android phone")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-
-            VStack(alignment: .leading, spacing: 12) {
-                step(1, "Install CallBridge on your Android phone")
-                step(2, "Open it and tap \u{201C}Scan QR code\u{201D}")
-                step(3, "Send a test to confirm the connection")
-            }
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    private func step(_ number: Int, _ text: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
-            Text("\(number)")
-                .font(.system(size: 12, weight: .semibold).monospacedDigit())
-                .foregroundStyle(.tertiary)
-            Text(text)
-                .font(.callout)
-            Spacer(minLength: 0)
-        }
-    }
-
-    // MARK: Last event
-
-    private func lastEventRow(_ event: AppState.LastEvent) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: event.title == "Ringing" ? "phone.arrow.down.left.fill" : "checkmark.circle.fill")
-                .font(.system(size: 12))
-                .foregroundStyle(.secondary)
-            Text(event.detail.isEmpty ? event.title : "\(event.title) · \(event.detail)")
-                .font(.callout)
-                .lineLimit(1)
-                .truncationMode(.tail)
-            Spacer(minLength: 8)
-            Text(event.time, format: .dateTime.hour().minute())
-                .font(.callout.monospacedDigit())
-                .foregroundStyle(.tertiary)
-        }
-        .accessibilityElement(children: .combine)
-    }
-
     // MARK: Actions
 
     private var actionButtons: some View {
@@ -204,11 +162,8 @@ struct AppView: View {
                 state.sendTestNotification()
             } label: {
                 Label("Send test notification", systemImage: "bell.fill")
-                    .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(Theme.accent)
-            .controlSize(.large)
+            .buttonStyle(NeutralProminentButtonStyle())
 
             CopyAddressButton()
                 .buttonStyle(.bordered)
@@ -286,6 +241,79 @@ struct AppView: View {
                 .foregroundStyle(.secondary)
         }
         .padding(.top, 8)
+    }
+}
+
+// MARK: - Pairing section
+// Self-contained so the future Pair · History · Settings tab split can lift
+// it straight out of AppView.
+
+struct PairingSection: View {
+    let payload: PairingPayload?
+    let ip: String
+
+    var body: some View {
+        VStack(spacing: 18) {
+            if let payload, let image = QRCode.image(for: payload.jsonString) {
+                Image(nsImage: image)
+                    .resizable()
+                    .interpolation(.none)
+                    .scaledToFit()
+                    .frame(width: 222, height: 222)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color.white)
+                            .shadow(color: .black.opacity(0.14), radius: 5, y: 2)
+                    )
+                    .accessibilityLabel("Pairing QR code for \(ip) port \(payload.port)")
+            }
+
+            Text("Scan with CallBridge on your Android phone")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+
+            VStack(alignment: .leading, spacing: 12) {
+                step(1, "Install CallBridge on your Android phone")
+                step(2, "Open it and tap \u{201C}Scan QR code\u{201D}")
+                step(3, "Send a test to confirm the connection")
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func step(_ number: Int, _ text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Text("\(number)")
+                .font(.system(size: 12, weight: .semibold).monospacedDigit())
+                .foregroundStyle(.tertiary)
+            Text(text)
+                .font(.callout)
+            Spacer(minLength: 0)
+        }
+    }
+}
+
+// MARK: - Last event row
+// The template for the future history list.
+
+struct LastEventRow: View {
+    let event: AppState.LastEvent
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: event.title == "Ringing" ? "phone.arrow.down.left.fill" : "checkmark.circle.fill")
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+            Text(event.detail.isEmpty ? event.title : "\(event.title) · \(event.detail)")
+                .font(.callout)
+                .lineLimit(1)
+                .truncationMode(.tail)
+            Spacer(minLength: 8)
+            Text(event.time, format: .dateTime.hour().minute())
+                .font(.callout.monospacedDigit())
+                .foregroundStyle(.tertiary)
+        }
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -388,8 +416,7 @@ private struct ConnectionSettingsView: View {
                                 state.applyConnection(port: port, secret: draftSecret.trimmingCharacters(in: .whitespaces))
                             }
                         }
-                        .buttonStyle(.borderedProminent)
-                        .tint(Theme.accent)
+                        .buttonStyle(NeutralProminentButtonStyle(compact: true))
                         .disabled(!hasChanges)
 
                         Text("Restarts the listener and updates the QR code.")

@@ -16,4 +16,5 @@
     <color name="on_warning_container">#4A3B00</color>
     <color name="warning_dot">#C08A1E</color>
     <color name="neutral_dot">#9CA49E</color>
+    <color name="launcher_background">#1D201E</color>
 </resources>

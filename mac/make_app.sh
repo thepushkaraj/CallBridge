@@ -32,9 +32,9 @@ cat > "$CONTENTS/Info.plist" << 'PLIST'
     <key>CFBundleIdentifier</key>
     <string>io.github.thepushkaraj.callbridge.mac</string>
     <key>CFBundleVersion</key>
-    <string>0.2.1</string>
+    <string>0.2.2</string>
     <key>CFBundleShortVersionString</key>
-    <string>0.2.1</string>
+    <string>0.2.2</string>
     <key>CFBundleExecutable</key>
     <string>CallBridge</string>
     <key>CFBundleIconFile</key>

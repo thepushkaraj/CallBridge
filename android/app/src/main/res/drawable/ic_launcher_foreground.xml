@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Bridge arc: phone node (bottom-left) to Mac node (top-right) -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M33,75 Q75,75 75,33"
+        android:strokeColor="#F2F4F2"
+        android:strokeLineCap="round"
+        android:strokeWidth="5.5" />
+    <path
+        android:fillColor="#F2F4F2"
+        android:pathData="M33,75 m-8.5,0 a8.5,8.5 0 1,1 17,0 a8.5,8.5 0 1,1 -17,0" />
+    <path
+        android:fillColor="#4CC38A"
+        android:pathData="M75,33 m-8.5,0 a8.5,8.5 0 1,1 17,0 a8.5,8.5 0 1,1 -17,0" />
+</vector>
