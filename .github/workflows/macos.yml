@@ -6,6 +6,9 @@ on:
   pull_request:
     paths: ["mac/**"]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-latest
