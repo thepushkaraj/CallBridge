@@ -46,6 +46,13 @@
 
     <!-- App update -->
     <string name="update_available_title">Update %1$s available</string>
+    <string name="update_banner_title">Update %1$s available</string>
+    <string name="update_banner_caption">Download and install the latest version</string>
+    <string name="update_button_download">Download</string>
+    <string name="update_button_install">Install</string>
+    <string name="check_updates">Check for updates</string>
+    <string name="up_to_date">You\'re up to date (v%1$s)</string>
+    <string name="update_check_failed">Couldn\'t check for updates</string>
     <string name="update_available_message">A newer version of CallBridge is ready. It downloads in the background and then asks to install.</string>
     <string name="update_action">Update</string>
     <string name="update_later">Later</string>

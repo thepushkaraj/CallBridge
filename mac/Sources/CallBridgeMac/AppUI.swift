@@ -169,11 +169,27 @@ struct AppView: View {
     }
 
     private var footnote: some View {
-        Text("Calls stay on your Wi-Fi. An optional secret keeps other devices from posting to this Mac.")
-            .font(.caption)
-            .foregroundStyle(.tertiary)
-            .multilineTextAlignment(.center)
-            .frame(maxWidth: .infinity)
+        VStack(spacing: 8) {
+            Text("Calls stay on your Wi-Fi. An optional secret keeps other devices from posting to this Mac.")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+            HStack(spacing: 6) {
+                Text("v\(MacUpdateCenter.currentVersion())")
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(.tertiary)
+                Button {
+                    state.checkForUpdates(manual: true)
+                } label: {
+                    Text(state.upToDateNotice ? "You're up to date ✓" : (state.isCheckingForUpdates ? "Checking…" : "Check for updates"))
+                        .font(.caption)
+                        .foregroundStyle(state.upToDateNotice ? Theme.accent : .secondary)
+                }
+                .buttonStyle(.plain)
+                .disabled(state.isCheckingForUpdates)
+            }
+        }
     }
 
     private func warningRow(icon: String, text: String) -> some View {

@@ -26,6 +26,10 @@ final class StatusBarManager: NSObject, NSMenuDelegate {
         show.target = self
         menu.addItem(show)
 
+        let check = NSMenuItem(title: "Check for updates…", action: #selector(checkUpdatesClicked), keyEquivalent: "")
+        check.target = self
+        menu.addItem(check)
+
         let updateItem = NSMenuItem(
             title: "Download update",
             action: #selector(downloadUpdateClicked),
@@ -61,6 +65,8 @@ final class StatusBarManager: NSObject, NSMenuDelegate {
     }
 
     @objc private func showClicked() { showWindow() }
+
+    @objc private func checkUpdatesClicked() { appState.checkForUpdates(manual: true) }
 
     @objc private func downloadUpdateClicked() { appState.startUpdateDownload() }
 

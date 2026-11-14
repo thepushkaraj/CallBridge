@@ -17,6 +17,7 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.view.View
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -41,6 +42,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var oemHintText: TextView
     private var appVersionName = ""
     private var pendingUpdate: UpdateChecker.Update? = null
+    private var availableUpdate: UpdateChecker.Update? = null
+    private var updateDialogShown = false
+    private var updateApkReady = false
     private var downloadId = -1L
 
     private val prefs by lazy { getSharedPreferences("callbridge", Context.MODE_PRIVATE) }
@@ -64,6 +68,9 @@ class MainActivity : AppCompatActivity() {
             cursor?.use {
                 val status = it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
                 if (it.moveToFirst() && status == DownloadManager.STATUS_SUCCESSFUL) {
+                    updateApkReady = true
+                    findViewById<com.google.android.material.button.MaterialButton>(R.id.update_button)
+                        .setText(R.string.update_button_install)
                     openUpdateInstaller()
                 } else {
                     showTestStatus(getString(R.string.update_download_failed), ok = false)
@@ -125,6 +132,18 @@ class MainActivity : AppCompatActivity() {
         // Visible version so sideloaded builds are always identifiable.
         findViewById<TextView>(R.id.footer_text).text =
             getString(R.string.footer_wifi) + "  ·  v" + appVersionName
+
+        findViewById<View>(R.id.update_button).setOnClickListener {
+            when {
+                updateApkReady -> openUpdateInstaller()
+                availableUpdate != null -> availableUpdate?.let { startUpdate(it) }
+            }
+        }
+        findViewById<View>(R.id.check_updates_button).setOnClickListener {
+            it.isEnabled = false
+            checkForAppUpdate(manual = true)
+            it.isEnabled = true
+        }
 
         statusRow.setOnClickListener {
             if (!hasCallPermissions()) requestCallPermissions()
@@ -289,21 +308,46 @@ class MainActivity : AppCompatActivity() {
 
     // MARK: App update
 
-    private fun checkForAppUpdate() {
+    private fun checkForAppUpdate(manual: Boolean = false) {
         thread {
-            val update = UpdateChecker.check(appVersionName)
-            if (update != null) {
-                runOnUiThread {
-                    if (isFinishing || isDestroyed) return@runOnUiThread
-                    MaterialAlertDialogBuilder(this)
-                        .setTitle(getString(R.string.update_available_title, update.version))
-                        .setMessage(getString(R.string.update_available_message))
-                        .setPositiveButton(getString(R.string.update_action)) { _, _ -> startUpdate(update) }
-                        .setNegativeButton(getString(R.string.update_later), null)
-                        .show()
+            val result = UpdateChecker.check(appVersionName)
+            runOnUiThread {
+                when (result) {
+                    is UpdateChecker.CheckResult.Available -> {
+                        availableUpdate = result.update
+                        showUpdateBanner()
+                        if (!updateDialogShown) {
+                            updateDialogShown = true
+                            MaterialAlertDialogBuilder(this)
+                                .setTitle(getString(R.string.update_available_title, result.update.version))
+                                .setMessage(getString(R.string.update_available_message))
+                                .setPositiveButton(getString(R.string.update_action)) { _, _ -> startUpdate(result.update) }
+                                .setNegativeButton(getString(R.string.update_later), null)
+                                .show()
+                        }
+                    }
+                    UpdateChecker.CheckResult.UpToDate ->
+                        if (manual) {
+                            Toast.makeText(
+                                this,
+                                getString(R.string.up_to_date, appVersionName),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    UpdateChecker.CheckResult.Failed ->
+                        if (manual) {
+                            Toast.makeText(this, R.string.update_check_failed, Toast.LENGTH_SHORT).show()
+                        }
                 }
             }
         }
+    }
+
+    private fun showUpdateBanner() {
+        val update = availableUpdate ?: return
+        findViewById<View>(R.id.update_banner).visibility = View.VISIBLE
+        findViewById<TextView>(R.id.update_banner_title).text =
+            getString(R.string.update_banner_title, update.version)
     }
 
     private fun startUpdate(update: UpdateChecker.Update) {
