@@ -1,10 +1,11 @@
+import AppKit
 import Foundation
 
 /// GitHub-Releases-backed update check + download + install for the Mac app.
 /// The repo must have a published release whose assets include the .app zip.
 enum MacUpdateCenter {
     static let repoSlug = "thepushkaraj/CallBridge"
-    private static let api = "https://api.github.com/repos/\(repoSlug)/releases/latest"
+    private static let api = "https://api.github.com/repos/thepushkaraj/CallBridge/releases/latest"
 
     struct Update {
         let version: String
@@ -36,6 +37,7 @@ enum MacUpdateCenter {
         // CALLBRIDGE_UPDATE_API overrides the endpoint for local testing or a
         // self-hosted manifest; the manifest is GitHub-Releases-shaped JSON.
         let endpoint = ProcessInfo.processInfo.environment["CALLBRIDGE_UPDATE_API"] ?? api
+        FileHandle.standardError.write(Data("[update] checking endpoint: \(endpoint)\n".utf8))
         guard let url = URL(string: endpoint) else {
             DispatchQueue.main.async { completion(nil) }
             return
@@ -46,9 +48,11 @@ enum MacUpdateCenter {
         URLSession.shared.dataTask(with: request) { data, response, _ in
             var update: Update?
             defer { DispatchQueue.main.async { completion(update) } }
+            let status = (response as? HTTPURLResponse)?.statusCode ?? -1
+            FileHandle.standardError.write(Data("[update] http status: \(status)\n".utf8))
             guard
                 let data,
-                (response as? HTTPURLResponse)?.statusCode == 200,
+                status == 200,
                 let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                 let tag = root["tag_name"] as? String
             else { return }
@@ -61,6 +65,7 @@ enum MacUpdateCenter {
             let zip = assets.first {
                 ($0["name"] as? String)?.hasSuffix(".zip") == true
             }.flatMap { $0["browser_download_url"] as? String }
+            FileHandle.standardError.write(Data("[update] tag=\(tag) newer=\(isNewer(version, than: currentVersion())) zip=\(zip ?? "none")\n".utf8))
             guard let zipURLString = zip, let zipURL = URL(string: zipURLString) else { return }
 
             update = Update(version: version, zipURL: zipURL)
@@ -93,6 +98,11 @@ enum MacUpdateCenter {
         process.executableURL = URL(fileURLWithPath: "/bin/bash")
         process.arguments = [scriptURL.path]
         try? process.run()
+
+        // Quit so the helper can finish the swap and relaunch the new version.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            NSApp.terminate(nil)
+        }
     }
 
     static func cachedUpdateZip() -> URL? {
@@ -124,7 +134,8 @@ final class UpdateDownloader: NSObject, URLSessionDownloadDelegate {
         totalBytesExpectedToWrite: Int64
     ) {
         guard totalBytesExpectedToWrite > 0 else { return }
-        onProgress?(Double(totalBytesWritten) / Double(totalBytesExpectedToWrite))
+        let fraction = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
+        DispatchQueue.main.async { self.onProgress?(fraction) }
     }
 
     func urlSession(
@@ -138,16 +149,18 @@ final class UpdateDownloader: NSObject, URLSessionDownloadDelegate {
         do {
             try FileManager.default.moveItem(at: location, to: destination)
             finished = true
-            onProgress?(1)
-            onComplete?(destination)
+            DispatchQueue.main.async {
+                self.onProgress?(1)
+                self.onComplete?(destination)
+            }
         } catch {
-            onComplete?(nil)
+            DispatchQueue.main.async { self.onComplete?(nil) }
         }
     }
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         if error != nil, !finished {
-            onComplete?(nil)
+            DispatchQueue.main.async { self.onComplete?(nil) }
         }
     }
 }
