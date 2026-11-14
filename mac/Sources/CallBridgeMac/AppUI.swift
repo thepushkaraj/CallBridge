@@ -30,7 +30,11 @@ struct AppView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
-                .padding(.bottom, 24)
+
+            Divider()
+                .overlay(Theme.hairline)
+                .padding(.top, 18)
+                .padding(.bottom, 22)
 
             if notificationsDenied {
                 warningRow(
@@ -82,7 +86,15 @@ struct AppView: View {
     // MARK: Header
 
     private var header: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(spacing: 12) {
+            RoundedRectangle(cornerRadius: 11, style: .continuous)
+                .fill(Color.primary.opacity(0.06))
+                .frame(width: 42, height: 42)
+                .overlay(
+                    Image(systemName: "phone.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                )
             VStack(alignment: .leading, spacing: 2) {
                 Text("CallBridge")
                     .font(.system(size: 20, weight: .bold))
@@ -94,7 +106,7 @@ struct AppView: View {
             }
             Spacer(minLength: 8)
             statusView
-                .padding(.top, 4)
+                .padding(.top, 2)
         }
     }
 
