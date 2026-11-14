@@ -22,24 +22,28 @@ enum Theme {
     })
 }
 
+// MARK: - Building blocks
+
+/// The shared card treatment: raised surface, hairline edge, barely-there shadow.
 private struct CardBackground: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .padding(18)
+            .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(Color(nsColor: .controlBackgroundColor))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .strokeBorder(Color.primary.opacity(0.07), lineWidth: 1)
             )
+            .shadow(color: Color.black.opacity(0.05), radius: 4, y: 1)
     }
 }
 
-extension View {
-    fileprivate func card() -> some View { modifier(CardBackground()) }
+private extension View {
+    func card() -> some View { modifier(CardBackground()) }
 }
 
 // MARK: - Root
@@ -50,7 +54,7 @@ struct AppView: View {
     @State private var settingsExpanded = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 16) {
             header
 
             if notificationsDenied {
@@ -66,17 +70,27 @@ struct AppView: View {
                 if case .failed(let message) = state.serverState {
                     failureCard(message)
                 }
+
+                Text("Pair your phone")
+                    .font(.system(size: 11, weight: .semibold))
+                    .tracking(0.6)
+                    .foregroundStyle(.secondary)
+                    .padding(.leading, 6)
+                    .padding(.bottom, -6)
+
                 pairingCard
+
                 if let event = state.lastEvent {
                     lastEventRow(event)
                 }
+
                 ConnectionSettingsView(expanded: $settingsExpanded)
                 actionButtons
                 footnote
             }
         }
         .padding(24)
-        .frame(width: 430, alignment: .leading)
+        .frame(width: 440, alignment: .leading)
         .onReceive(NotificationCenter.default.publisher(for: .notifierPermissionDenied)) { _ in
             notificationsDenied = true
         }
@@ -86,16 +100,17 @@ struct AppView: View {
 
     private var header: some View {
         HStack(spacing: 12) {
-            RoundedRectangle(cornerRadius: 9, style: .continuous)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(Theme.accentSoft)
-                .frame(width: 38, height: 38)
+                .frame(width: 44, height: 44)
                 .overlay(
                     Image(systemName: "phone.fill")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 19, weight: .semibold))
                         .foregroundStyle(Theme.accent)
                 )
-            VStack(alignment: .leading, spacing: 2) {
-                Text("CallBridge").font(.headline)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("CallBridge")
+                    .font(.system(size: 21, weight: .bold))
                 Text(subtitle)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -124,12 +139,14 @@ struct AppView: View {
             }
         }()
         return HStack(spacing: 6) {
-            Circle().fill(dot).frame(width: 8, height: 8)
-            Text(label).font(.callout)
+            Circle().fill(dot).frame(width: 7, height: 7)
+            Text(label)
+                .font(.system(size: 12, weight: .medium))
         }
         .padding(.horizontal, 10)
-        .padding(.vertical, 5)
+        .padding(.vertical, 4)
         .background(Capsule().fill(soft))
+        .fixedSize()
     }
 
     // MARK: Pairing card
@@ -141,16 +158,24 @@ struct AppView: View {
                     .resizable()
                     .interpolation(.none)
                     .scaledToFit()
-                    .frame(width: 216, height: 216)
+                    .frame(width: 218, height: 218)
                     .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
                             .fill(Color.white)
-                            .shadow(color: .black.opacity(0.08), radius: 2, y: 1)
+                            .shadow(color: .black.opacity(0.10), radius: 3, y: 1)
                     )
                     .accessibilityLabel("Pairing QR code for \(state.selectedIP) port \(state.port)")
             }
 
-            VStack(alignment: .leading, spacing: 10) {
+            Text("Scan with CallBridge on your Android phone")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+
+            Divider().opacity(0.6)
+
+            VStack(alignment: .leading, spacing: 12) {
                 step(1, "Install CallBridge on your Android phone")
                 step(2, "Open it and tap \u{201C}Scan QR code\u{201D}")
                 step(3, "Send a test to confirm the connection")
@@ -160,15 +185,15 @@ struct AppView: View {
     }
 
     private func step(_ number: Int, _ text: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
             Text("\(number)")
-                .font(.caption.weight(.bold).monospacedDigit())
+                .font(.system(size: 12, weight: .bold).monospacedDigit())
                 .foregroundStyle(Theme.accent)
-                .frame(width: 18, height: 18)
+                .frame(width: 22, height: 22)
                 .background(Circle().fill(Theme.accentSoft))
+                .offset(y: 2)
             Text(text)
                 .font(.callout)
-                .foregroundStyle(.primary)
             Spacer(minLength: 0)
         }
     }
@@ -178,8 +203,13 @@ struct AppView: View {
     private func lastEventRow(_ event: AppState.LastEvent) -> some View {
         HStack(spacing: 10) {
             Image(systemName: event.title == "Ringing" ? "phone.arrow.down.left.fill" : "checkmark.circle.fill")
-                .font(.system(size: 14))
+                .font(.system(size: 13))
                 .foregroundStyle(event.title == "Ringing" ? Theme.warning : Theme.accent)
+                .frame(width: 26, height: 26)
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(event.title == "Ringing" ? Theme.warning.opacity(0.14) : Theme.accentSoft)
+                )
             Text(event.detail.isEmpty ? event.title : "\(event.title) · \(event.detail)")
                 .font(.callout)
                 .lineLimit(1)
@@ -189,7 +219,12 @@ struct AppView: View {
                 .font(.callout.monospacedDigit())
                 .foregroundStyle(.secondary)
         }
-        .padding(.horizontal, 4)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color.primary.opacity(0.04))
+        )
         .accessibilityElement(children: .combine)
     }
 
@@ -201,10 +236,11 @@ struct AppView: View {
 
     private var footnote: some View {
         Text("Calls stay on your Wi-Fi. An optional secret keeps other devices from posting to this Mac.")
-            .font(.footnote)
+            .font(.caption)
             .foregroundStyle(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
-            .padding(.horizontal, 2)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
+            .padding(.top, -2)
     }
 
     private func warningRow(icon: String, text: String) -> some View {
@@ -214,12 +250,11 @@ struct AppView: View {
                 .foregroundStyle(Theme.warning)
             Text(text)
                 .font(.callout)
-                .foregroundStyle(.primary)
         }
-        .padding(12)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Theme.warning.opacity(0.12))
         )
     }
@@ -244,14 +279,14 @@ struct AppView: View {
                 .controlSize(.small)
             }
         }
-        .padding(12)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color(nsColor: .systemRed).opacity(0.10))
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(nsColor: .systemRed).opacity(0.08))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .strokeBorder(Color(nsColor: .systemRed).opacity(0.25), lineWidth: 1)
         )
     }
@@ -340,7 +375,7 @@ private struct ConnectionSettingsView: View {
                         .font(.callout.weight(.medium))
                         .foregroundStyle(.secondary)
                     Image(systemName: "chevron.down")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.system(size: 9, weight: .semibold))
                         .foregroundStyle(.secondary)
                         .rotationEffect(.degrees(expanded ? 180 : 0))
                 }
@@ -348,10 +383,10 @@ private struct ConnectionSettingsView: View {
             .buttonStyle(.plain)
 
             if expanded {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 14) {
                     if state.availableIPs.count > 1 {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("NETWORK ADDRESS").font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+                        VStack(alignment: .leading, spacing: 5) {
+                            fieldLabel("Network address")
                             Picker("", selection: $draftIP) {
                                 ForEach(state.availableIPs, id: \.self, content: Text.init)
                             }
@@ -359,16 +394,16 @@ private struct ConnectionSettingsView: View {
                         }
                     }
 
-                    HStack(spacing: 10) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("PORT").font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+                    HStack(alignment: .top, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 5) {
+                            fieldLabel("Port")
                             TextField("8765", text: $draftPort)
                                 .textFieldStyle(.roundedBorder)
                                 .font(.callout.monospacedDigit())
                                 .frame(width: 110)
                         }
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("SHARED SECRET (OPTIONAL)").font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+                        VStack(alignment: .leading, spacing: 5) {
+                            fieldLabel("Shared secret (optional)")
                             SecureField("none", text: $draftSecret)
                                 .textFieldStyle(.roundedBorder)
                                 .font(.callout)
@@ -390,14 +425,30 @@ private struct ConnectionSettingsView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-                .padding(.top, 14)
+                .padding(.top, 16)
             }
         }
-        .card()
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(nsColor: .controlBackgroundColor))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.07), lineWidth: 1)
+        )
         .onAppear { seedDrafts() }
         .onChange(of: expanded) { isExpanded in
             if isExpanded { seedDrafts() }
         }
+    }
+
+    private func fieldLabel(_ text: String) -> some View {
+        Text(text.uppercased())
+            .font(.system(size: 10, weight: .semibold))
+            .tracking(0.5)
+            .foregroundStyle(.secondary)
     }
 
     private func seedDrafts() {

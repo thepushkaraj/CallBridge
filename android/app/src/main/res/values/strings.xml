@@ -9,7 +9,14 @@
     <string name="status_paired_watching">Paired with %1$s · watching for incoming calls</string>
 
     <!-- Pairing card -->
+    <string name="pair_section">Pair your phone</string>
     <string name="pair_title">Pair with your Mac</string>
+    <string name="step_one">1</string>
+    <string name="step_two">2</string>
+    <string name="step_three">3</string>
+    <string name="pair_step_1">Install CallBridge on your Android phone</string>
+    <string name="pair_step_2">Open it and tap “Scan QR code”</string>
+    <string name="pair_step_3">Send a test to confirm the connection</string>
     <string name="pair_caption">On your Mac, open CallBridge — a QR code appears there. Scan it once and you\'re connected.</string>
     <string name="scan_qr">Scan QR code</string>
     <string name="manual_toggle_show">Enter address manually</string>
