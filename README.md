@@ -83,6 +83,7 @@ Already installed? The app checks GitHub on launch and offers the update in-app 
 
 | Release | Highlights |
 |---|---|
+| [v0.3.2](https://github.com/thepushkaraj/CallBridge/releases/tag/v0.3.2) | Android: app version now visible in the footer; download progress shows on the update button |
 | [v0.3.1](https://github.com/thepushkaraj/CallBridge/releases/tag/v0.3.1) | Android fix release: updater points at the real GitHub API, APK is release-signed |
 | [v0.3.0](https://github.com/thepushkaraj/CallBridge/releases/tag/v0.3.0) | In-app auto-updater, manual update checks, release-signed Android builds |
 | [v0.2.0](https://github.com/thepushkaraj/CallBridge/releases/tag/v0.2.0) | QR-code pairing, Material redesign, new app identity |
