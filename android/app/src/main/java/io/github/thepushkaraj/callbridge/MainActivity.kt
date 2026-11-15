@@ -355,7 +355,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun downloadUpdateApk(apkUrl: String) {
         updateButton.isEnabled = false
-        showTestStatus(getString(R.string.update_downloading), ok = null)
+        updateButton.text = getString(R.string.update_downloading)
         thread {
             try {
                 val destination = File(
@@ -378,9 +378,9 @@ class MainActivity : AppCompatActivity() {
                                 lastReported = written
                                 runOnUiThread {
                                     if (!isFinishing) {
-                                        showTestStatus(
-                                            getString(R.string.update_downloading_percent, (written * 100 / total).toString()),
-                                            ok = null
+                                        updateButton.text = getString(
+                                            R.string.update_downloading_percent,
+                                            (written * 100 / total).toString()
                                         )
                                     }
                                 }
@@ -393,14 +393,14 @@ class MainActivity : AppCompatActivity() {
                     updateApkReady = true
                     updateButton.isEnabled = true
                     updateButton.text = getString(R.string.update_button_install)
-                    showTestStatus(getString(R.string.update_ready_to_install), ok = true)
                     openUpdateInstaller()
                 }
             } catch (e: Exception) {
                 runOnUiThread {
                     if (isFinishing || isDestroyed) return@runOnUiThread
                     updateButton.isEnabled = true
-                    showTestStatus(getString(R.string.update_download_failed), ok = false)
+                    updateButton.text = getString(R.string.update_button_download)
+                    Toast.makeText(this, R.string.update_download_failed, Toast.LENGTH_SHORT).show()
                 }
             }
         }
