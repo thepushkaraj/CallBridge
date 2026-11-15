@@ -96,6 +96,7 @@ enum MacUpdateCenter {
 
         let script = """
         #!/bin/bash
+        set -e
         sleep 1
         WORK="$(mktemp -d)"
         /usr/bin/ditto -x -k "\(zip.path)" "$WORK"

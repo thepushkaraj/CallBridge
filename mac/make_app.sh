@@ -26,8 +26,8 @@ mkdir -p "$CONTENTS/MacOS" "$CONTENTS/Frameworks" "$CONTENTS/Resources"
 cp "$BINARY" "$CONTENTS/MacOS/CallBridge"
 cp AppIcon.icns "$CONTENTS/Resources/AppIcon.icns"
 
-# Point dyld at Contents/Frameworks so Sparkle.framework resolves inside
-# the bundle (SwiftPM doesn't add this rpath; Xcode does it for you).
+# Point dyld at Contents/Frameworks (SwiftPM doesn't add this rpath; Xcode
+# does it for you). Kept for any future bundled frameworks.
 install_name_tool -add_rpath "@executable_path/../Frameworks" "$CONTENTS/MacOS/CallBridge" 2>/dev/null || true
 
 cat > "$CONTENTS/Info.plist" << PLIST

@@ -393,6 +393,8 @@ class MainActivity : AppCompatActivity() {
                     "CallBridge-update.apk"
                 )
                 val connection = URL(apkUrl).openConnection() as HttpURLConnection
+                connection.connectTimeout = 15000
+                connection.readTimeout = 30000
                 connection.connect()
                 val total = connection.contentLengthLong
                 connection.inputStream.use { input ->

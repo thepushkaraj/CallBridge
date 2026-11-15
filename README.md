@@ -95,7 +95,7 @@ Already installed? The app checks GitHub on launch and offers the update in-app 
 
 - [x] v0.1 — ringing notifications, manual IP entry
 - [x] Mac `.app` with QR-code pairing
-- [x] Opt-in SMS forwarding to Mac notifications *(this branch)*
+- [x] Opt-in SMS forwarding to Mac notifications *(v0.4.0)*
 - [ ] Missed-call events
 - [ ] mDNS auto-discovery (no manual IP entry)
 - [ ] Signed DMG + APK releases

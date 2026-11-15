@@ -46,7 +46,7 @@ their absence.
 | Value     | Meaning                                        | Status        |
 |-----------|------------------------------------------------|---------------|
 | `ringing` | Phone is ringing for an incoming call          | stable        |
-| `sms`     | An SMS text message was received on the phone  | v0.3.0        |
+| `sms`     | An SMS text message was received on the phone  | v0.4.0        |
 | `test`    | Connectivity test sent from the settings screen| stable        |
 | `missed`  | Incoming call was not answered                 | planned       |
 
