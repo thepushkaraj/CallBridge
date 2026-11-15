@@ -79,10 +79,11 @@ Prebuilt binaries are attached to every [GitHub release](https://github.com/thep
 - **Android**: `CallBridge-vX.Y.Z.apk` — sideload it (Android asks to allow installs from your browser once)
 - **macOS**: `CallBridge-macOS.zip` — unzip, drag to Applications. The first launch needs one approval (the app is not Apple-notarized): double-click it once — if macOS blocks it, choose **Done**, then open **System Settings → Privacy & Security** and click **Allow Anyway** next to the CallBridge message. This is only needed once.
 
-Already installed? The app checks GitHub on launch and offers the update in-app — or use **Check for updates** in the app. ([latest release](https://github.com/thepushkaraj/CallBridge/releases/latest))
+Already installed? The app checks GitHub on launch and offers the update in-app — or use **Check for updates** in the app. ([latest release](https://github.com/thepushkaraj/CallBridge/releases/latest)) One-time note: if you installed the v0.3.0 **Android** APK, uninstall it once before installing v0.3.1 or newer (the app switched to its permanent release signature in v0.3.1).
 
 | Release | Highlights |
 |---|---|
+| [v0.3.1](https://github.com/thepushkaraj/CallBridge/releases/tag/v0.3.1) | Android fix release: updater points at the real GitHub API, APK is release-signed |
 | [v0.3.0](https://github.com/thepushkaraj/CallBridge/releases/tag/v0.3.0) | In-app auto-updater, manual update checks, release-signed Android builds |
 | [v0.2.0](https://github.com/thepushkaraj/CallBridge/releases/tag/v0.2.0) | QR-code pairing, Material redesign, new app identity |
 | [v0.1.0](https://github.com/thepushkaraj/CallBridge/releases/tag/v0.1.0) | Call notifications to your Mac |
