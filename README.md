@@ -4,12 +4,30 @@
 
 # CallBridge
 
-Get a native macOS notification the instant your Android phone rings.
-No cloud, no accounts. Your call metadata never leaves your Wi-Fi network.
+Get a native macOS notification the instant your Android phone rings —
+or a text message arrives. No cloud, no accounts. Everything stays on
+your Wi-Fi network.
 
 ```
-[Android rings] --HTTP POST--> [Mac listener] --> [macOS notification]
+[Android rings / SMS] --HTTP POST--> [Mac listener] --> [macOS notification]
 ```
+
+## Features
+
+- **Incoming call alerts** — the moment your phone rings, a native macOS
+  notification appears with the caller's name (from your contacts) or number
+- **SMS forwarding** *(opt-in)* — received text messages show up on your Mac
+  with the sender's name; off by default, and Android asks for the SMS
+  permission only when you turn it on
+- **One-tap OTP copy** — code-like messages get a `Copy code` action, detected
+  entirely on-device; tapping copies to the Mac's clipboard and the button
+  flips to `Copied ✓` in place
+- **One-scan pairing** — the Mac shows a QR code, the phone scans it, done
+  (manual address entry stays available)
+- **Self-updating apps** — both apps check GitHub for new releases and update
+  in place: download progress on Android, automatic swap-and-relaunch on the Mac
+- **No cloud, no accounts** — a single JSON POST over your own Wi-Fi, optional
+  shared secret, and the whole wire protocol fits on one page
 
 ## Why
 
@@ -84,22 +102,13 @@ Already installed? The app checks GitHub on launch and offers the update in-app 
 
 | Release | Highlights |
 |---|---|
+| [v0.4.1](https://github.com/thepushkaraj/CallBridge/releases/tag/v0.4.1) | Reliability: Android APK download timeouts, fail-safe Mac update swap |
 | [v0.4.0](https://github.com/thepushkaraj/CallBridge/releases/tag/v0.4.0) | SMS forwarding: text messages appear as Mac notifications, with one-tap OTP copy |
 | [v0.3.2](https://github.com/thepushkaraj/CallBridge/releases/tag/v0.3.2) | Android: app version now visible in the footer; download progress shows on the update button |
 | [v0.3.1](https://github.com/thepushkaraj/CallBridge/releases/tag/v0.3.1) | Android fix release: updater points at the real GitHub API, APK is release-signed |
 | [v0.3.0](https://github.com/thepushkaraj/CallBridge/releases/tag/v0.3.0) | In-app auto-updater, manual update checks, release-signed Android builds |
 | [v0.2.0](https://github.com/thepushkaraj/CallBridge/releases/tag/v0.2.0) | QR-code pairing, Material redesign, new app identity |
 | [v0.1.0](https://github.com/thepushkaraj/CallBridge/releases/tag/v0.1.0) | Call notifications to your Mac |
-
-## Roadmap
-
-- [x] v0.1 — ringing notifications, manual IP entry
-- [x] Mac `.app` with QR-code pairing
-- [x] Opt-in SMS forwarding to Mac notifications *(v0.4.0)*
-- [ ] Missed-call events
-- [ ] mDNS auto-discovery (no manual IP entry)
-- [ ] Signed DMG + APK releases
-- [ ] Windows / Linux listeners speaking the same protocol
 
 ## Contributing
 
