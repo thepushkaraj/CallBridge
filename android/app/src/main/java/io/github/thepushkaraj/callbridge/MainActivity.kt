@@ -354,8 +354,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun downloadUpdateApk(apkUrl: String) {
+        // The label becomes a bare percentage; pin the laid-out width so the
+        // button doesn't visibly shrink when the text gets short.
+        updateButton.minWidth = updateButton.width
         updateButton.isEnabled = false
-        updateButton.text = getString(R.string.update_downloading)
+        updateButton.text = "0%"
         thread {
             try {
                 val destination = File(
@@ -378,10 +381,7 @@ class MainActivity : AppCompatActivity() {
                                 lastReported = written
                                 runOnUiThread {
                                     if (!isFinishing) {
-                                        updateButton.text = getString(
-                                            R.string.update_downloading_percent,
-                                            (written * 100 / total).toString()
-                                        )
+                                        updateButton.text = "${written * 100 / total}%"
                                     }
                                 }
                             }
