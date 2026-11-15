@@ -9,8 +9,7 @@ import java.net.URL
  * internet call; failures are reported so manual checks can surface them.
  */
 object UpdateChecker {
-    private const val REPO = "thepushkaraj/CallBridge"
-    private const val API = "http://127.0.0.1:8000/releases/latest.json"
+    private const val API = "https://api.github.com/repos/thepushkaraj/CallBridge/releases/latest"
     private const val TIMEOUT_MS = 5000
 
     data class Update(val version: String, val apkUrl: String)
