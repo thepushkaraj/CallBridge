@@ -77,7 +77,7 @@ own Mac.
 Prebuilt binaries are attached to every [GitHub release](https://github.com/thepushkaraj/CallBridge/releases):
 
 - **Android**: `CallBridge-vX.Y.Z.apk` — sideload it (Android asks to allow installs from your browser once)
-- **macOS**: `CallBridge-macOS.zip` — unzip, drag to Applications, right-click → **Open** on first launch (unsigned binary)
+- **macOS**: `CallBridge-macOS.zip` — unzip, drag to Applications. The first launch needs one approval (the app is not Apple-notarized): double-click it once — if macOS blocks it, choose **Done**, then open **System Settings → Privacy & Security** and click **Allow Anyway** next to the CallBridge message. This is only needed once.
 
 Already installed? The app checks GitHub on launch and offers the update in-app — or use **Check for updates** in the app. ([latest release](https://github.com/thepushkaraj/CallBridge/releases/latest))
 
