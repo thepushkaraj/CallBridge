@@ -115,6 +115,12 @@ class MainActivity : AppCompatActivity() {
         updateBannerTitle = findViewById(R.id.update_banner_title)
         updateButton = findViewById(R.id.update_button)
 
+        appVersionName = try {
+            packageManager.getPackageInfo(packageName, 0).versionName
+        } catch (e: Exception) {
+            ""
+        }
+
         // Visible version so sideloaded builds are always identifiable.
         findViewById<TextView>(R.id.footer_text).text =
             getString(R.string.footer_wifi) + "  ·  v" + appVersionName
@@ -140,11 +146,6 @@ class MainActivity : AppCompatActivity() {
         requestIgnoreBatteryOptimizationsOnce()
         WatchService.start(this)
 
-        appVersionName = try {
-            packageManager.getPackageInfo(packageName, 0).versionName
-        } catch (e: Exception) {
-            ""
-        }
         checkForAppUpdate()
 
         if (hasCallPermissions()) {
