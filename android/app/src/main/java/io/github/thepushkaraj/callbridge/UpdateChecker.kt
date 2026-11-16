@@ -44,7 +44,8 @@ object UpdateChecker {
             var apkUrl: String? = null
             for (i in 0 until assets.length()) {
                 val asset = assets.getJSONObject(i)
-                if (asset.optString("name").endsWith(".apk")) {
+                val name = asset.optString("name")
+                if (name.startsWith("CallBridge-") && name.endsWith(".apk")) {
                     apkUrl = asset.optString("browser_download_url")
                     break
                 }

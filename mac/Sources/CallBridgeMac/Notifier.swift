@@ -93,7 +93,7 @@ enum Notifier {
 
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(copied, forType: .string)
-        appLog("Copied to clipboard: \(isCode ? "code \(copied)" : "message")")
+        appLog(isCode ? "Copied a code to the clipboard" : "Copied a message to the clipboard")
     }
 
     // MARK: - Posting

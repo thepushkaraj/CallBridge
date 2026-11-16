@@ -25,6 +25,9 @@ object ApiClient {
         if (host.isEmpty()) {
             return Result.failure(IllegalStateException("No Mac IP configured"))
         }
+        if (!LanAddress.isPrivateIPv4(host)) {
+            return Result.failure(IllegalArgumentException("Mac address is not on the local network"))
+        }
         val port = prefs.getString("port", null)?.trim().takeUnless { it.isNullOrEmpty() } ?: "8765"
         val secret = prefs.getString("secret", null)?.trim().orEmpty()
 

@@ -20,8 +20,7 @@ your Wi-Fi network.
   with the sender's name; off by default, and Android asks for the SMS
   permission only when you turn it on
 - **One-tap OTP copy** — code-like messages get a `Copy code` action, detected
-  entirely on-device; tapping copies to the Mac's clipboard and the button
-  flips to `Copied ✓` in place
+  entirely on-device; tapping copies the code to the Mac's clipboard
 - **One-scan pairing** — the Mac shows a QR code, the phone scans it, done
   (manual address entry stays available)
 - **Self-updating apps** — both apps check GitHub for new releases and update
@@ -64,7 +63,9 @@ open build/CallBridge.app
 ```
 
 The window shows the address it's listening on, a QR code, and the three
-pairing steps. (Terminal-only mode still works:
+pairing steps. macOS also asks to accept incoming network connections the
+first time the app listens. Choose Allow. If that prompt is denied, the
+phone cannot reach the Mac. (Terminal-only mode still works:
 `.build/release/callbridge --headless --port 8765`.)
 
 ### 2. Android — install and pair
@@ -88,15 +89,21 @@ the QR so only your phone can post notifications to it.
 
 Honest about what this is: LAN-only, plaintext HTTP, optional shared
 secret header (`X-CallBridge-Secret`). It is designed for home networks,
-not hostile ones. Nothing is stored, logged, or sent anywhere except your
-own Mac.
+not hostile ones. The phone only sends to a private address (`10/8`,
+`172.16/12`, `192.168/16`, or `169.254/16`). A QR code or a typed address
+outside those ranges is rejected. Pairing settings stay on the phone and
+are excluded from Android backup.
+
+Delivery is best-effort. Each event is one POST with a 4-second timeout
+and no retry. If the Mac is asleep, or the Wi-Fi blip lasts longer than
+that, the call or text is dropped.
 
 ## Releases
 
 Prebuilt binaries are attached to every [GitHub release](https://github.com/thepushkaraj/CallBridge/releases):
 
 - **Android**: `CallBridge-vX.Y.Z.apk` — sideload it (Android asks to allow installs from your browser once)
-- **macOS**: `CallBridge-macOS.zip` — unzip, drag to Applications. The first launch needs one approval (the app is not Apple-notarized): double-click it once — if macOS blocks it, choose **Done**, then open **System Settings → Privacy & Security** and click **Allow Anyway** next to the CallBridge message. This is only needed once.
+- **macOS**: `CallBridge-macOS.zip` — unzip, drag to Applications. The first launch needs one approval (the app is not Apple-notarized): double-click it once — if macOS blocks it, choose **Done**, then open **System Settings → Privacy & Security** and click **Allow Anyway** next to the CallBridge message. This is only needed once. macOS also asks to accept incoming network connections. Choose **Allow**. If that prompt is denied, the phone cannot reach the Mac.
 
 Already installed? The app checks GitHub on launch and offers the update in-app — or use **Check for updates** in the app. ([latest release](https://github.com/thepushkaraj/CallBridge/releases/latest)) One-time note: if you installed the v0.3.0 **Android** APK, uninstall it once before installing v0.3.1 or newer (the app switched to its permanent release signature in v0.3.1).
 

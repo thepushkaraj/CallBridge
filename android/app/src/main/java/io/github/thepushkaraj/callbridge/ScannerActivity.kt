@@ -143,34 +143,43 @@ class ScannerActivity : AppCompatActivity() {
 
     /** Returns true when the payload was accepted and the activity is finishing. */
     private fun handlePayload(raw: String): Boolean {
-        val payload = PairingPayload.fromJson(raw)
-        if (payload == null) {
-            showScanError()
-            return false
-        }
-        finished = true
-        getSharedPreferences(PREFS, MODE_PRIVATE)
-            .edit()
-            .putString("host", payload.host)
-            .putString("port", payload.port.toString())
-            .putString("secret", payload.secret ?: "")
-            .apply()
+        when (val decoded = PairingPayload.decode(raw)) {
+            is PairingPayload.DecodeResult.Ok -> {
+                val payload = decoded.payload
+                finished = true
+                getSharedPreferences(PREFS, MODE_PRIVATE)
+                    .edit()
+                    .putString("host", payload.host)
+                    .putString("port", payload.port.toString())
+                    .putString("secret", payload.secret ?: "")
+                    .apply()
 
-        val result = Intent()
-            .putExtra(EXTRA_HOST, payload.host)
-            .putExtra(EXTRA_PORT, payload.port)
-        runOnUiThread {
-            setResult(Activity.RESULT_OK, result)
-            finish()
+                val result = Intent()
+                    .putExtra(EXTRA_HOST, payload.host)
+                    .putExtra(EXTRA_PORT, payload.port)
+                runOnUiThread {
+                    setResult(Activity.RESULT_OK, result)
+                    finish()
+                }
+                return true
+            }
+            PairingPayload.DecodeResult.NotOnLocalNetwork -> {
+                showScanError(getString(R.string.scanner_error_lan))
+                return false
+            }
+            PairingPayload.DecodeResult.Invalid -> {
+                showScanError(getString(R.string.scanner_error))
+                return false
+            }
         }
-        return true
     }
 
-    private fun showScanError() {
+    private fun showScanError(message: String) {
         val now = System.currentTimeMillis()
         if (now - lastErrorAt < ERROR_DEBOUNCE_MS) return
         lastErrorAt = now
         runOnUiThread {
+            errorText.text = message
             errorText.visibility = View.VISIBLE
             errorText.animate().cancel()
             errorText.alpha = 1f

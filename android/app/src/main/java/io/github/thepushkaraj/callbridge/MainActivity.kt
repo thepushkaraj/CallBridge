@@ -48,6 +48,7 @@ class MainActivity : AppCompatActivity() {
     private var availableUpdate: UpdateChecker.Update? = null
     private var updateDialogShown = false
     private var updateApkReady = false
+    private var updateCheckRunning = false
     private var activityResumed = false
     private lateinit var smsSwitch: com.google.android.material.materialswitch.MaterialSwitch
     private var pendingSmsEnable = false
@@ -78,6 +79,7 @@ class MainActivity : AppCompatActivity() {
 
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { grants ->
+            val wasSmsRequest = pendingSmsEnable
             if (pendingSmsEnable) {
                 pendingSmsEnable = false
                 val granted = grants[Manifest.permission.RECEIVE_SMS] == true
@@ -88,6 +90,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             refreshStatus()
+            // Ask about battery only after the phone-permission dialog has closed.
+            if (!wasSmsRequest && hasCallPermissions()) {
+                requestIgnoreBatteryOptimizationsOnce()
+            }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -159,9 +165,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
         findViewById<View>(R.id.check_updates_button).setOnClickListener {
+            if (updateCheckRunning) return@setOnClickListener
             it.isEnabled = false
             checkForAppUpdate(manual = true)
-            it.isEnabled = true
         }
 
         statusRow.setOnClickListener {
@@ -169,17 +175,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         showOemHintIfNeeded()
-        requestNotificationPermissionIfNeeded()
-        requestIgnoreBatteryOptimizationsOnce()
         WatchService.start(this)
-
         checkForAppUpdate()
-
-        if (hasCallPermissions()) {
-            refreshStatus()
-        } else {
-            requestCallPermissions()
-        }
+        refreshStatus()
+        requestStartupPermissions()
     }
 
     override fun onResume() {
@@ -231,11 +230,15 @@ class MainActivity : AppCompatActivity() {
 
     // MARK: Actions
 
-    private fun save() {
+    private fun save(): Boolean {
         val host = hostInput.text.toString().trim()
         if (host.isEmpty()) {
             hostLayout.error = getString(R.string.host_required)
-            return
+            return false
+        }
+        if (!LanAddress.isPrivateIPv4(host)) {
+            hostLayout.error = getString(R.string.host_not_local)
+            return false
         }
         hostLayout.error = null
         prefs.edit()
@@ -245,10 +248,11 @@ class MainActivity : AppCompatActivity() {
             .apply()
         refreshStatus()
         showTestStatus(getString(R.string.status_saved), ok = true)
+        return true
     }
 
     private fun sendTest() {
-        save()
+        if (!save()) return
         showTestStatus(getString(R.string.status_sending), ok = null)
         thread {
             val result = ApiClient.sendEvent(this, ApiClient.EVENT_TEST)
@@ -281,27 +285,50 @@ class MainActivity : AppCompatActivity() {
     // MARK: Permissions & battery
 
     private fun hasCallPermissions(): Boolean {
-        return CALL_PERMISSIONS.all {
+        return REQUIRED_CALL_PERMISSIONS.all {
             ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
         }
     }
 
-    private fun requestCallPermissions() {
-        val missing = CALL_PERMISSIONS.filter {
-            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-        }
-        if (missing.isNotEmpty()) {
-            permissionLauncher.launch(missing.toTypedArray())
-        }
-    }
-
-    private fun requestNotificationPermissionIfNeeded() {
+    /** Phone permissions, plus contacts and notifications the first time they are missing. */
+    private fun requestStartupPermissions() {
+        val missing = missingCallPermissions(includeContacts = !prefs.getBoolean(CONTACTS_ASKED_KEY, false))
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED
         ) {
-            permissionLauncher.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
+            missing += Manifest.permission.POST_NOTIFICATIONS
         }
+        if (missing.isEmpty()) {
+            if (hasCallPermissions()) requestIgnoreBatteryOptimizationsOnce()
+            return
+        }
+        if (missing.contains(Manifest.permission.READ_CONTACTS)) {
+            prefs.edit().putBoolean(CONTACTS_ASKED_KEY, true).apply()
+        }
+        permissionLauncher.launch(missing.toTypedArray())
+    }
+
+    private fun requestCallPermissions() {
+        val missing = missingCallPermissions(includeContacts = !prefs.getBoolean(CONTACTS_ASKED_KEY, false))
+        if (missing.isEmpty()) return
+        if (missing.contains(Manifest.permission.READ_CONTACTS)) {
+            prefs.edit().putBoolean(CONTACTS_ASKED_KEY, true).apply()
+        }
+        permissionLauncher.launch(missing.toTypedArray())
+    }
+
+    private fun missingCallPermissions(includeContacts: Boolean): MutableList<String> {
+        val missing = REQUIRED_CALL_PERMISSIONS.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }.toMutableList()
+        if (includeContacts &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            missing += Manifest.permission.READ_CONTACTS
+        }
+        return missing
     }
 
     private fun requestIgnoreBatteryOptimizationsOnce() {
@@ -320,9 +347,15 @@ class MainActivity : AppCompatActivity() {
     // MARK: App update
 
     private fun checkForAppUpdate(manual: Boolean = false) {
+        if (updateCheckRunning) return
+        updateCheckRunning = true
         thread {
             val result = UpdateChecker.check(appVersionName)
             runOnUiThread {
+                updateCheckRunning = false
+                if (manual) {
+                    findViewById<View>(R.id.check_updates_button).isEnabled = true
+                }
                 when (result) {
                     is UpdateChecker.CheckResult.Available -> {
                         availableUpdate = result.update
@@ -387,15 +420,20 @@ class MainActivity : AppCompatActivity() {
         updateButton.isEnabled = false
         updateButton.text = "0%"
         thread {
+            val destination = File(
+                getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),
+                "CallBridge-update.apk"
+            )
+            var connection: HttpURLConnection? = null
             try {
-                val destination = File(
-                    getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),
-                    "CallBridge-update.apk"
-                )
-                val connection = URL(apkUrl).openConnection() as HttpURLConnection
+                connection = URL(apkUrl).openConnection() as HttpURLConnection
                 connection.connectTimeout = 15000
                 connection.readTimeout = 30000
                 connection.connect()
+                val status = connection.responseCode
+                if (status !in 200..299) {
+                    error("HTTP $status")
+                }
                 val total = connection.contentLengthLong
                 connection.inputStream.use { input ->
                     FileOutputStream(destination).use { output ->
@@ -403,7 +441,14 @@ class MainActivity : AppCompatActivity() {
                         var read: Int
                         var written = 0L
                         var lastReported = 0L
+                        var checkedMagic = false
                         while (input.read(buffer).also { read = it } != -1) {
+                            if (!checkedMagic) {
+                                if (read < 2 || buffer[0] != 0x50.toByte() || buffer[1] != 0x4B.toByte()) {
+                                    error("Downloaded file is not an APK")
+                                }
+                                checkedMagic = true
+                            }
                             output.write(buffer, 0, read)
                             written += read
                             if (total > 0 && written - lastReported > total / 20) {
@@ -415,6 +460,7 @@ class MainActivity : AppCompatActivity() {
                                 }
                             }
                         }
+                        if (!checkedMagic) error("Downloaded file is not an APK")
                     }
                 }
                 runOnUiThread {
@@ -425,12 +471,15 @@ class MainActivity : AppCompatActivity() {
                     openUpdateInstaller()
                 }
             } catch (e: Exception) {
+                destination.delete()
                 runOnUiThread {
                     if (isFinishing || isDestroyed) return@runOnUiThread
                     updateButton.isEnabled = true
                     updateButton.text = getString(R.string.update_button_download)
                     Toast.makeText(this, R.string.update_download_failed, Toast.LENGTH_SHORT).show()
                 }
+            } finally {
+                connection?.disconnect()
             }
         }
     }
@@ -471,11 +520,11 @@ class MainActivity : AppCompatActivity() {
 
     private companion object {
         const val BATTERY_ASKED_KEY = "asked_battery_optimization"
+        const val CONTACTS_ASKED_KEY = "asked_contacts"
         const val SMS_ENABLED_KEY = "sms_enabled"
-        val CALL_PERMISSIONS = arrayOf(
+        val REQUIRED_CALL_PERMISSIONS = arrayOf(
             Manifest.permission.READ_PHONE_STATE,
-            Manifest.permission.READ_CALL_LOG,
-            Manifest.permission.READ_CONTACTS
+            Manifest.permission.READ_CALL_LOG
         )
     }
 }

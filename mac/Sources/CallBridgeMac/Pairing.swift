@@ -83,9 +83,28 @@ enum NetworkAddresses {
 
         let excludedPrefixes = ["lo", "utun", "awdl", "llw", "bridge", "ap", "demux", "inpod", "stf"]
         return found
-            .filter { name, _ in !excludedPrefixes.contains { name.hasPrefix($0) } }
+            .filter { name, address in
+                !excludedPrefixes.contains { name.hasPrefix($0) } && isPrivateIPv4(address)
+            }
             .sorted { score($0.name) < score($1.name) }
             .map(\.address)
+    }
+
+    /// Same ranges the phone will accept: 10/8, 172.16/12, 192.168/16, 169.254/16.
+    private static func isPrivateIPv4(_ address: String) -> Bool {
+        let parts = address.split(separator: ".")
+        guard parts.count == 4,
+              parts.allSatisfy({ !$0.isEmpty && $0.allSatisfy(\.isNumber) && !($0.count > 1 && $0.hasPrefix("0")) }),
+              let a = Int(parts[0]), let b = Int(parts[1]),
+              let c = Int(parts[2]), let d = Int(parts[3]),
+              (0...255).contains(a), (0...255).contains(b),
+              (0...255).contains(c), (0...255).contains(d)
+        else { return false }
+        if a == 10 { return true }
+        if a == 172 && (16...31).contains(b) { return true }
+        if a == 192 && b == 168 { return true }
+        if a == 169 && b == 254 { return true }
+        return false
     }
 
     private static func score(_ name: String) -> Int {

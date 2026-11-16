@@ -75,7 +75,7 @@ enum MacUpdateCenter {
             }
 
             let zip = assets.first {
-                ($0["name"] as? String)?.hasSuffix(".zip") == true
+                ($0["name"] as? String) == "CallBridge-macOS.zip"
             }.flatMap { $0["browser_download_url"] as? String }
             guard let zipURLString = zip, let zipURL = URL(string: zipURLString) else {
                 outcome = .upToDate
@@ -87,7 +87,8 @@ enum MacUpdateCenter {
     }
 
     /// Swaps the running bundle with the downloaded one and relaunches.
-    /// A detached helper script performs the swap one second after the app exits.
+    /// The helper waits until this process has exited. The current app is moved
+    /// aside and restored if the new bundle is missing or the replace fails.
     static func installDownloadedUpdate() {
         guard
             let zip = cachedUpdateZip(),
@@ -96,14 +97,27 @@ enum MacUpdateCenter {
 
         let script = """
         #!/bin/bash
-        set -e
+        set -euo pipefail
         sleep 1
-        WORK="$(mktemp -d)"
-        /usr/bin/ditto -x -k "\(zip.path)" "$WORK"
-        rm -rf "\(appPath)"
-        mv "$WORK/CallBridge.app" "\(appPath)"
-        rm -rf "$WORK" "\(zip.path)"
-        open "\(appPath)"
+        ZIP="$CALLBRIDGE_UPDATE_ZIP"
+        APP="$CALLBRIDGE_UPDATE_APP"
+        WORK="$(/usr/bin/mktemp -d)"
+        trap '/bin/rm -rf "$WORK"' EXIT
+        /usr/bin/ditto -x -k "$ZIP" "$WORK"
+        if [[ ! -d "$WORK/CallBridge.app" ]]; then
+          echo "Update zip did not contain CallBridge.app" >&2
+          exit 1
+        fi
+        OLD="${APP}.previous"
+        /bin/rm -rf "$OLD"
+        /bin/mv "$APP" "$OLD"
+        if ! /bin/mv "$WORK/CallBridge.app" "$APP"; then
+          /bin/mv "$OLD" "$APP" || true
+          exit 1
+        fi
+        /bin/rm -rf "$OLD" || true
+        /bin/rm -f "$ZIP" || true
+        /usr/bin/open "$APP"
         """
         let scriptURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("callbridge-update.sh")
@@ -112,6 +126,10 @@ enum MacUpdateCenter {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/bash")
         process.arguments = [scriptURL.path]
+        var env = ProcessInfo.processInfo.environment
+        env["CALLBRIDGE_UPDATE_ZIP"] = zip.path
+        env["CALLBRIDGE_UPDATE_APP"] = appPath
+        process.environment = env
         try? process.run()
 
         // Quit so the helper can finish the swap and relaunch the new version.

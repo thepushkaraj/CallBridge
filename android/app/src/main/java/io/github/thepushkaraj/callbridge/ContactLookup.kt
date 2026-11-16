@@ -29,7 +29,7 @@ object ContactLookup {
                 } else ""
             } ?: ""
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to resolve contact name for $number", e)
+            Log.w(TAG, "Failed to resolve contact name", e)
             ""
         }
     }

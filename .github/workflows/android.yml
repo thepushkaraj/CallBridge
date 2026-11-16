@@ -35,6 +35,9 @@ jobs:
 
       - name: Build release APK (tags) / debug APK (PRs)
         if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          CALLBRIDGE_STORE_PASSWORD: ${{ secrets.CALLBRIDGE_STORE_PASSWORD }}
+          CALLBRIDGE_KEY_PASSWORD: ${{ secrets.CALLBRIDGE_KEY_PASSWORD }}
         run: ./gradlew :app:assembleRelease
         working-directory: android
 

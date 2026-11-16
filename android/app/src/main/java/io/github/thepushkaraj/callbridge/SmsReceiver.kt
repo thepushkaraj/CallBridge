@@ -58,7 +58,7 @@ class SmsReceiver : BroadcastReceiver() {
         thread {
             try {
                 val callerName = ContactLookup.resolveName(appContext, sender)
-                Log.i(TAG, "Sending sms event: sender=$sender, caller=$callerName, body=${body.length} chars")
+                Log.i(TAG, "Sending sms event (${body.length} chars)")
                 ApiClient.sendEvent(
                     appContext,
                     ApiClient.EVENT_SMS,

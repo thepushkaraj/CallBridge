@@ -1,19 +1,14 @@
-import java.util.Properties
-import java.io.FileInputStream
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
 
-// Release signing: release.keystore lives outside git (gitignored). CI provides
-// it via a secret; local builds fall back to the debug signature.
+// Release signing: android/release.keystore is gitignored. CI writes it from
+// RELEASE_KEYSTORE_B64. Passwords come from the environment, never the repo.
+// Without the keystore, release builds keep the debug signature.
 val releaseKeystoreFile = rootProject.file("release.keystore")
-val releaseKeystoreProperties = Properties().apply {
-    if (releaseKeystoreFile.exists()) {
-        load(FileInputStream(releaseKeystoreFile))
-    }
-}
+val releaseStorePassword = System.getenv("CALLBRIDGE_STORE_PASSWORD")
+val releaseKeyPassword = System.getenv("CALLBRIDGE_KEY_PASSWORD")
 
 android {
     namespace = "io.github.thepushkaraj.callbridge"
@@ -28,12 +23,15 @@ android {
     }
 
     signingConfigs {
-        if (releaseKeystoreFile.exists()) {
+        if (releaseKeystoreFile.exists()
+            && !releaseStorePassword.isNullOrEmpty()
+            && !releaseKeyPassword.isNullOrEmpty()
+        ) {
             create("release") {
                 storeFile = releaseKeystoreFile
-                storePassword = "callbridge2026"
+                storePassword = releaseStorePassword
                 keyAlias = "callbridge"
-                keyPassword = "callbridge2026"
+                keyPassword = releaseKeyPassword
             }
         }
     }
@@ -41,9 +39,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            if (releaseKeystoreFile.exists()) {
-                signingConfig = signingConfigs.getByName("release")
-            }
+            signingConfigs.findByName("release")?.let { signingConfig = it }
         }
     }
 
@@ -69,4 +65,19 @@ dependencies {
 
     // Bundled on-device QR model; no Google Play Services required.
     implementation("com.google.mlkit:barcode-scanning:17.3.0")
+}
+
+gradle.taskGraph.whenReady {
+    val assemblingRelease = allTasks.any {
+        it.project == project && (it.name == "assembleRelease" || it.name == "bundleRelease")
+    }
+    if (assemblingRelease
+        && releaseKeystoreFile.exists()
+        && (releaseStorePassword.isNullOrEmpty() || releaseKeyPassword.isNullOrEmpty())
+    ) {
+        throw GradleException(
+            "release.keystore is present but CALLBRIDGE_STORE_PASSWORD or " +
+                "CALLBRIDGE_KEY_PASSWORD is not set. Refusing to sign the release with the debug key."
+        )
+    }
 }

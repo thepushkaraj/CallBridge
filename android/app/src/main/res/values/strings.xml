@@ -26,6 +26,7 @@
     <string name="secret_hint">Shared secret (optional)</string>
     <string name="save">Save settings</string>
     <string name="host_required">Enter your Mac\'s IP address</string>
+    <string name="host_not_local">Use a private address on your Wi-Fi, such as 192.168.x.x</string>
 
     <!-- Connection test -->
     <string name="test_title">Connection test</string>
@@ -40,6 +41,7 @@
     <!-- Scanner -->
     <string name="scanner_title">Point your camera at the QR code on your Mac</string>
     <string name="scanner_error">That\'s not a CallBridge code — try the QR from your Mac.</string>
+    <string name="scanner_error_lan">That code points outside your local network.</string>
     <string name="scanner_camera_needed">Camera permission is needed to scan. Allow CallBridge in Settings, then reopen the scanner.</string>
     <string name="scanner_close">Close scanner</string>
     <string name="scanner_torch">Toggle light</string>

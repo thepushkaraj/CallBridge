@@ -48,7 +48,7 @@ class CallReceiver : BroadcastReceiver() {
         val now = System.currentTimeMillis()
         synchronized(lock) {
             if (isRinging && lastRingNumber == incomingNumber && (now - lastRingTime < DEDUP_WINDOW_MS)) {
-                Log.i(TAG, "Ignoring duplicate ringing broadcast for $incomingNumber")
+                Log.i(TAG, "Ignoring duplicate ringing broadcast")
                 return
             }
             isRinging = true
@@ -60,15 +60,15 @@ class CallReceiver : BroadcastReceiver() {
         thread {
             try {
                 val callerName = ContactLookup.resolveName(appContext, incomingNumber)
-                Log.i(TAG, "Sending ringing event: number=$incomingNumber, caller=$callerName")
+                Log.i(TAG, "Sending ringing event")
                 val result = ApiClient.sendEvent(
                     appContext,
                     ApiClient.EVENT_RINGING,
                     number = incomingNumber,
                     caller = callerName
                 )
-                Log.i(TAG, "Send result: $result")
-                showToast(appContext, result.isSuccess)
+                Log.i(TAG, "Send result: ${result.isSuccess}")
+                if (result.isFailure) showFailureToast(appContext)
             } catch (e: Exception) {
                 Log.e(TAG, "Error handling phone state broadcast", e)
             } finally {
@@ -77,15 +77,11 @@ class CallReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun showToast(context: Context, isSuccess: Boolean) {
-        val handler = Handler(Looper.getMainLooper())
-        handler.post {
+    private fun showFailureToast(context: Context) {
+        Handler(Looper.getMainLooper()).post {
             Toast.makeText(
                 context,
-                context.getString(
-                    R.string.receiver_toast,
-                    if (isSuccess) "sent" else "failed"
-                ),
+                context.getString(R.string.receiver_toast, "failed"),
                 Toast.LENGTH_LONG
             ).show()
         }

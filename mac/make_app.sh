@@ -9,8 +9,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 CONFIGURATION="${1:-release}"
-APP_VERSION="${APP_VERSION:-0.2.3}"
-REPO_SLUG="thepushkaraj/CallBridge"
+APP_VERSION="${APP_VERSION:-0.4.1}"
 
 echo "==> swift build -c $CONFIGURATION"
 swift build -c "$CONFIGURATION"
