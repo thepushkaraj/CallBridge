@@ -1,7 +1,7 @@
 # The CallBridge Protocol
 
 CallBridge clients and servers speak plain HTTP/1.1 with JSON bodies.
-This document is the entire spec — if you can implement what's here, you
+This document is the entire spec. If you can implement what's here, you
 can interoperate with any CallBridge app.
 
 ## Endpoint
