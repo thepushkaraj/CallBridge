@@ -68,7 +68,7 @@
     <p class="lede">
       CallBridge turns your Android's incoming calls and texts into native
       macOS notifications. One HTTP POST across your own Wi-Fi.
-      No account. No relay. Nothing stored.
+      No account. No cloud. Nothing stored.
     </p>
     <div class="cta-row">
       <a class="button" href="#download"><svg aria-hidden="true"><use href="#apple"/></svg> Download for Mac</a>
@@ -89,8 +89,8 @@
         <h2 id="arrivals-h">Shows up like any<br>other banner.</h2>
         <p>
           Not a second app to watch. The notification your Mac already has a
-          place for. Focusable, actionable, gone in one swipe. Calls on the left
-          of your day, texts and one-time codes on the right of it.
+          place for. Focusable, actionable, gone in one swipe. Calls, texts,
+          one-time codes: they all land in the same corner of your screen.
         </p>
       </div>
       <div class="arrivals-stage" aria-hidden="true">
@@ -167,7 +167,7 @@
             </div>
           </div>
           <p class="move-num">03</p>
-          <h3>Send a test, hear nothing</h3>
+          <h3>Send a test, then forget it</h3>
           <p>One POST should be all it takes. If the banner shows, you never open this app again.</p>
         </li>
       </ol>
@@ -202,12 +202,11 @@ HTTP/1.1 <span class="ok">200 OK</span>
         <p class="kicker">Opt-in</p>
         <h2 id="sms-h">Texts stay off<br>until you ask.</h2>
         <p>
-          SMS forwarding is a switch, and it ships off. Leave it off and
-          CallBridge never reads a message. Turn it on and a text that looks
-          like a one-time code gets a <b>Copy code</b> action on the Mac.
-          Detected on the phone, copied with one tap, never written to a log.
+          SMS forwarding is a switch, and it starts off. Leave it off and
+          CallBridge never reads a message. Turn it on and any text
+          containing a code gets a <b>Copy code</b> button on your Mac.
+          One tap copies it. Nothing is logged.
         </p>
-        <p class="dim">Deny contacts and the call still arrives. The name is simply missing.</p>
         <div class="switch-demo">
           <span class="switch-label">Forward SMS</span>
           <button class="switch" type="button" data-switch aria-pressed="false" aria-label="Forward SMS, off">
