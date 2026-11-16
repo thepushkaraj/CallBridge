@@ -18,8 +18,8 @@ android {
         applicationId = "io.github.thepushkaraj.callbridge"
         minSdk = 26
         targetSdk = 34
-        versionCode = 12
-        versionName = "0.4.1"
+        versionCode = 13
+        versionName = "0.4.2"
     }
 
     signingConfigs {
