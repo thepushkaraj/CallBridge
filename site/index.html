@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CallBridge · rings in your pocket, lands on your Mac</title>
+  <meta name="description" content="CallBridge turns incoming calls and texts on your Android into native macOS notifications. One HTTP POST over your own Wi-Fi. No account, no cloud, nothing stored.">
+  <meta name="theme-color" content="#f4f1e8">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="canonical" href="https://callbridge.pushkaraj.me/">
+  <meta property="og:title" content="CallBridge · rings in your pocket, lands on your Mac">
+  <meta property="og:description" content="Native macOS notifications for your Android's calls and texts. One HTTP POST over your own Wi-Fi. No account, no cloud.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://callbridge.pushkaraj.me/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,420;0,9..144,520;1,9..144,420&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <svg class="sprite" aria-hidden="true">
+    <symbol id="mark" viewBox="0 0 108 108">
+      <rect width="108" height="108" rx="24" fill="currentColor"/>
+      <path d="M40 68Q68 68 68 40" fill="none" stroke="var(--paper)" stroke-width="5.5" stroke-linecap="round"/>
+      <circle cx="40" cy="68" r="8.5" fill="var(--paper)"/>
+      <circle cx="68" cy="40" r="8.5" fill="#4cc38a"/>
+    </symbol>
+    <symbol id="apple" viewBox="0 0 17 20">
+      <path fill="currentColor" d="M13.9 10.6c0-2.2 1.8-3.3 1.9-3.4-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-2.9-.8C4.8 5.5 3.4 6.4 2.6 7.8c-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.8 2.2 1.1 0 1.6-.7 2.9-.7 1.4 0 1.7.7 2.9.7 1.2 0 2-1.1 2.7-2.2.9-1.3 1.2-2.5 1.2-2.6 0 0-2.3-.9-2.3-3.6zM11.7 3.9c.6-.8 1.1-1.8 1-2.9-.9 0-2.1.6-2.7 1.4-.6.7-1.2 1.8-1 2.8 1 .1 2.1-.5 2.7-1.3z"/>
+    </symbol>
+    <symbol id="android" viewBox="0 0 20 24">
+      <path fill="currentColor" d="M3.6 8.4h12.8v9.2c0 .8-.6 1.4-1.4 1.4h-.9v3.2c0 .9-.7 1.6-1.6 1.6s-1.6-.7-1.6-1.6v-3.2H9.1V22c0 .9-.7 1.6-1.6 1.6S5.9 23 5.9 22v-3.2H5c-.8 0-1.4-.6-1.4-1.4V8.4zM1.5 8.4c.9 0 1.6.7 1.6 1.6v5.6c0 .9-.7 1.6-1.6 1.6S0 16.5 0 15.6V10c0-.9.7-1.6 1.5-1.6zm17 0c.9 0 1.5.7 1.5 1.6v5.6c0 .9-.7 1.6-1.5 1.6-.9 0-1.6-.7-1.6-1.6V10c0-.9.7-1.6 1.6-1.6zM13.7 1l1.1-1c.1-.1.3-.1.4 0s.1.3 0 .4l-1.1 1.1c.8.4 1.5 1 2 1.7.5.7.8 1.6.9 2.5H3c.1-.9.4-1.8.9-2.5.5-.7 1.2-1.3 2-1.7L4.8.4c-.1-.1-.1-.3 0-.4s.3-.1.4 0l1.2 1.1c.8-.3 1.6-.5 2.6-.5s1.8.1 2.6.5l1.2-1.1c.1-.1.3-.1.4 0s.1.3 0 .4L12.5 1c.4.1.8.2 1.2 0zM7 5c.4 0 .8-.4.8-.8S7.4 3.4 7 3.4s-.8.4-.8.8.4.8.8.8zm6 0c.4 0 .8-.4.8-.8s-.4-.8-.8-.8-.8.4-.8.8.4.8.8.8z"/>
+    </symbol>
+    <symbol id="arrow" viewBox="0 0 14 14">
+      <path d="M2 12L12 2M5 2h7v7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </svg>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <!-- The banner lives where macOS puts banners. It drops once, then fades. -->
+  <aside class="macos-banner" data-banner aria-hidden="true">
+    <div class="macos-banner-app">
+      <svg viewBox="0 0 108 108" aria-hidden="true"><use href="#mark"/></svg>
+      <span>CallBridge</span>
+    </div>
+    <p class="macos-banner-title">Incoming call</p>
+    <p class="macos-banner-sub">Alex · +1 555 014 8291</p>
+    <button class="macos-banner-x" type="button" data-banner-close aria-label="Dismiss notification">×</button>
+  </aside>
+
+  <header class="bar">
+    <a class="brand" href="#top" aria-label="CallBridge home">
+      <svg class="brand-mark" viewBox="0 0 108 108" aria-hidden="true"><use href="#mark"/></svg>
+      <span>CallBridge</span>
+    </a>
+    <nav class="nav" aria-label="Main">
+      <a href="#how">How</a>
+      <a href="#wire">The wire</a>
+      <a href="#sms">SMS</a>
+      <a href="#limits">Limits</a>
+      <a class="nav-cta" href="#download">Download</a>
+    </nav>
+  </header>
+
+  <section class="hero" id="top">
+    <p class="kicker"><span class="live" aria-hidden="true"></span> On your Wi-Fi. Nowhere else.</p>
+    <h1>Rings in your pocket.<br><em>Lands</em> on your Mac.</h1>
+    <p class="lede">
+      CallBridge turns your Android's incoming calls and texts into native
+      macOS notifications. One HTTP POST across your own Wi-Fi.
+      No account. No relay. Nothing stored.
+    </p>
+    <div class="cta-row">
+      <a class="button" href="#download"><svg aria-hidden="true"><use href="#apple"/></svg> Download for Mac</a>
+      <a class="quiet" href="#download">Get the Android app</a>
+    </div>
+    <p class="proof">
+      Free &amp; open source · MIT · v<span data-version>0.4.1</span> ·
+      <a href="https://github.com/thepushkaraj/CallBridge">source on GitHub</a>
+    </p>
+  </section>
+
+  <main id="main">
+
+    <!-- ============ arrivals: the banners, staged ============ -->
+    <section class="arrivals" aria-labelledby="arrivals-h">
+      <div class="arrivals-copy">
+        <p class="kicker">What lands</p>
+        <h2 id="arrivals-h">Shows up like any<br>other banner.</h2>
+        <p>
+          Not a second app to watch. The notification your Mac already has a
+          place for. Focusable, actionable, gone in one swipe. Calls on the left
+          of your day, texts and one-time codes on the right of it.
+        </p>
+      </div>
+      <div class="arrivals-stage" aria-hidden="true">
+        <article class="banner banner-call">
+          <div class="banner-app">
+            <svg viewBox="0 0 108 108"><use href="#mark"/></svg>
+            <span>CallBridge</span>
+            <time>now</time>
+          </div>
+          <p class="banner-title">Incoming call</p>
+          <p class="banner-sub">Alex · +1 555 014 8291</p>
+        </article>
+        <article class="banner banner-sms">
+          <div class="banner-app">
+            <svg viewBox="0 0 108 108"><use href="#mark"/></svg>
+            <span>CallBridge</span>
+            <time>now</time>
+          </div>
+          <p class="banner-title">SMS from Alex</p>
+          <p class="banner-sub">Your verification code is 482913. It expires in 10 minutes.</p>
+          <button class="chip" type="button" data-copy="482913">Copy code</button>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============ how: three moves, each shown ============ -->
+    <section class="how" id="how" aria-labelledby="how-h">
+      <h2 id="how-h">Paired in one scan.</h2>
+      <ol class="moves">
+        <li>
+          <div class="move-art">
+            <div class="mac-window">
+              <div class="mac-titlebar">
+                <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+                <span class="mac-title">CallBridge</span>
+              </div>
+              <div class="mac-body">
+                <img src="pairing-qr.png" width="148" height="148" alt="" loading="lazy">
+                <p class="mono dim">192.168.1.42 : 8765</p>
+              </div>
+            </div>
+          </div>
+          <p class="move-num">01</p>
+          <h3>Open it on the Mac</h3>
+          <p>The app starts listening and shows its address as a QR code. Pick a network if there are two.</p>
+        </li>
+        <li>
+          <div class="move-art">
+            <div class="phone">
+              <div class="phone-notch"></div>
+              <div class="phone-screen">
+                <div class="scan-frame">
+                  <span class="scan-line"></span>
+                </div>
+                <p class="mono dim">point · scan · done</p>
+              </div>
+            </div>
+          </div>
+          <p class="move-num">02</p>
+          <h3>Scan it with the phone</h3>
+          <p>The address and the shared secret, if you set one, travel inside the code. No typing.</p>
+        </li>
+        <li>
+          <div class="move-art">
+            <div class="mac-window">
+              <div class="mac-titlebar">
+                <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+                <span class="mac-title">Send test</span>
+              </div>
+              <div class="mac-body">
+                <p class="mono">POST /call → <span class="ok">200 OK</span></p>
+                <p class="dim small">test received from Pixel 8</p>
+              </div>
+            </div>
+          </div>
+          <p class="move-num">03</p>
+          <h3>Send a test, hear nothing</h3>
+          <p>One POST should be all it takes. If the banner shows, you never open this app again.</p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- ============ wire: the one dark band ============ -->
+    <section class="wire" id="wire" aria-labelledby="wire-h">
+      <div class="wire-copy">
+        <p class="kicker">The wire</p>
+        <h2 id="wire-h">The whole protocol<br>is <em>this.</em></h2>
+        <p>
+          Any client that can POST JSON can stand in for the phone. <code>curl</code>
+          is a valid test device. One request, one notification. No session, no
+          second format, no ack beyond the status code.
+        </p>
+      </div>
+      <div class="terminal">
+        <div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="term-title">anywhere</span></div>
+        <pre><code><span class="prompt">$</span> curl -i http://192.168.1.42:8765/call <span class="dim">\</span>
+    -H <span class="str">'Content-Type: application/json'</span> <span class="dim">\</span>
+    -d <span class="str">'{"event":"ringing","number":"+15550148291",
+         "caller":"Alex","device":"Pixel 8"}'</span>
+
+HTTP/1.1 <span class="ok">200 OK</span>
+{"ok":true}</code></pre>
+      </div>
+    </section>
+
+    <!-- ============ sms: opt-in + the working chip ============ -->
+    <section class="sms" id="sms" aria-labelledby="sms-h">
+      <div class="sms-copy">
+        <p class="kicker">Opt-in</p>
+        <h2 id="sms-h">Texts stay off<br>until you ask.</h2>
+        <p>
+          SMS forwarding is a switch, and it ships off. Leave it off and
+          CallBridge never reads a message. Turn it on and a text that looks
+          like a one-time code gets a <b>Copy code</b> action on the Mac.
+          Detected on the phone, copied with one tap, never written to a log.
+        </p>
+        <p class="dim">Deny contacts and the call still arrives. The name is simply missing.</p>
+        <div class="switch-demo">
+          <span class="switch-label">Forward SMS</span>
+          <button class="switch" type="button" data-switch aria-pressed="false" aria-label="Forward SMS, off">
+            <span class="knob"></span>
+          </button>
+          <span class="switch-state" data-switch-state>off</span>
+        </div>
+      </div>
+      <div class="sms-stage" aria-hidden="true">
+        <article class="banner banner-wide">
+          <div class="banner-app">
+            <svg viewBox="0 0 108 108"><use href="#mark"/></svg>
+            <span>CallBridge</span>
+            <time>now</time>
+          </div>
+          <p class="banner-title">SMS from Chase (94043)</p>
+          <p class="banner-sub">482913 is your code for CallBridge. It expires in 10 minutes.</p>
+          <button class="chip" type="button" data-copy="482913">Copy code</button>
+        </article>
+        <p class="try-it"><svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><use href="#arrow"/></svg> go on, press it. that one really copies</p>
+      </div>
+    </section>
+
+    <!-- ============ limits: the honesty sheet ============ -->
+    <section class="limits" id="limits" aria-labelledby="limits-h">
+      <div class="limits-inner">
+        <p class="kicker">Honesty</p>
+        <h2 id="limits-h">The limits, on purpose.</h2>
+        <dl class="sheet">
+          <div>
+            <dt>Delivery</dt>
+            <dd>One try. Four seconds. No queue, no retry. If the Mac is asleep, that ring is gone. That is what “no server” means.</dd>
+          </div>
+          <div>
+            <dt>Network</dt>
+            <dd>LAN-only. The phone refuses anything outside the private ranges. It will not send a notification through the internet, ever.</dd>
+          </div>
+          <div>
+            <dt>Transport</dt>
+            <dd>Plain HTTP, like the traffic between your printer and your Mac. Fine on a network you trust; the wrong tool for a café.</dd>
+          </div>
+          <div>
+            <dt>Codebase</dt>
+            <dd>~3,000 lines you can read in an evening. The protocol fits on one page. There is nowhere to hide anything.</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- ============ download ============ -->
+    <section class="download" id="download" aria-labelledby="dl-h">
+      <h2 id="dl-h">Two files. No installer.</h2>
+      <div class="dl-cards">
+        <a class="dl-card" data-zip href="https://github.com/thepushkaraj/CallBridge/releases/latest/download/CallBridge-macOS.zip">
+          <div class="dl-head">
+            <svg class="dl-os" aria-hidden="true"><use href="#apple"/></svg>
+            <span>macOS</span>
+            <span class="dl-ver">v<span data-version>0.4.1</span></span>
+          </div>
+          <p class="dl-file mono">CallBridge-macOS.zip</p>
+          <p>Unzip, drag to Applications. First launch asks for one approval (we don't pay Apple for notarization), then never again.</p>
+          <span class="dl-go">Download <svg aria-hidden="true"><use href="#arrow"/></svg></span>
+        </a>
+        <a class="dl-card" data-apk href="https://github.com/thepushkaraj/CallBridge/releases/latest/download/CallBridge-latest.apk">
+          <div class="dl-head">
+            <svg class="dl-os" aria-hidden="true"><use href="#android"/></svg>
+            <span>Android</span>
+            <span class="dl-ver">v<span data-version>0.4.1</span></span>
+          </div>
+          <p class="dl-file mono" data-apk-name>CallBridge-v0.4.1.apk</p>
+          <p>Sideload the APK (Android asks to allow installs from your browser once). Requires 8.0+, same Wi-Fi.</p>
+          <span class="dl-go">Download <svg aria-hidden="true"><use href="#arrow"/></svg></span>
+        </a>
+      </div>
+      <p class="dl-foot">
+        Both apps update themselves after this ·
+        <a data-notes href="https://github.com/thepushkaraj/CallBridge/releases/latest">release notes</a> ·
+        <a href="https://github.com/thepushkaraj/CallBridge/blob/main/PROTOCOL.md">protocol</a> ·
+        <a href="https://github.com/thepushkaraj/CallBridge">source</a>
+      </p>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <svg class="foot-mark" viewBox="0 0 108 108" aria-hidden="true"><use href="#mark"/></svg>
+    <p>CallBridge. Your calls, your network. Built by <a href="https://github.com/thepushkaraj">@thepushkaraj</a> and the source is one click away.</p>
+    <p class="mono dim">MIT · no trackers on this page, either</p>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>
