@@ -22,6 +22,10 @@ final class CallServer {
     func start() throws {
         let parameters = NWParameters.tcp
         parameters.allowLocalEndpointReuse = true
+        // Wi-Fi only. The product is "phone and Mac on the same Wi-Fi" by
+        // design; binding the interface type keeps VPN tunnels, bridges and
+        // other interfaces from exposing the listener.
+        parameters.requiredInterfaceType = .wifi
         let listener = try NWListener(using: parameters, on: NWEndpoint.Port(rawValue: port)!)
         listener.newConnectionHandler = { [weak self] connection in
             self?.accept(connection)
@@ -77,7 +81,7 @@ final class CallServer {
     }
 
     private func route(_ request: HTTPRequest) -> HTTPResponse {
-        if let secret, request.header("X-CallBridge-Secret") != secret {
+        if let secret, !Self.secretsMatch(request.header("X-CallBridge-Secret"), secret) {
             appLog("Rejected request with missing/wrong secret from \(request.path)")
             return HTTPResponse(status: "401 Unauthorized", body: "{\"ok\":false}")
         }
@@ -98,6 +102,21 @@ final class CallServer {
         connection.send(content: response.serialized(), completion: .contentProcessed { _ in
             connection.cancel()
         })
+    }
+
+    /// Timing-safe comparison: runs in time proportional to the longer
+    /// string regardless of where a mismatch occurs.
+    static func secretsMatch(_ provided: String?, _ expected: String) -> Bool {
+        guard let provided else { return false }
+        let lhs = Array(provided.utf8)
+        let rhs = Array(expected.utf8)
+        var difference = UInt8(lhs.count == rhs.count ? 0 : 1)
+        for index in 0..<max(lhs.count, rhs.count) {
+            let left = index < lhs.count ? lhs[index] : 0
+            let right = index < rhs.count ? rhs[index] : 0
+            difference |= left ^ right
+        }
+        return difference == 0
     }
 }
 

@@ -97,6 +97,16 @@ enum MacUpdateCenter {
                 outcome = .upToDate
                 return
             }
+            // Defense in depth: even if an unexpected manifest names some
+            // other URL, only GitHub's hosts are ever downloaded from.
+            let allowedHosts = ["github.com", "objects.githubusercontent.com", "release-assets.githubusercontent.com"]
+            func allowed(_ url: URL) -> Bool {
+                url.scheme == "https" && allowedHosts.contains(url.host ?? "")
+            }
+            guard allowed(zipURL), allowed(sigURL) else {
+                outcome = .upToDate
+                return
+            }
 
             outcome = .available(Update(version: version, zipURL: zipURL, sigURL: sigURL))
         }.resume()

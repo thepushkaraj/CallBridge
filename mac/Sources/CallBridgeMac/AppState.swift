@@ -44,6 +44,7 @@ final class AppState: ObservableObject {
 
     static let defaultsPortKey = "port"
     static let defaultsSecretKey = "secret"
+    static let defaultsSecretOptOutKey = "secret_opted_out"
     static let defaultPort: UInt16 = 8765
 
     init(portOverride: UInt16? = nil, secretOverride: String? = nil) {
@@ -52,13 +53,36 @@ final class AppState: ObservableObject {
         let storedSecret = defaults.string(forKey: Self.defaultsSecretKey) ?? ""
 
         port = portOverride ?? (storedPort != 0 ? storedPort : Self.defaultPort)
-        secret = secretOverride ?? storedSecret
+
+        // First run: generate a pairing secret so the listener never starts
+        // unauthenticated by default. The secret rides in the QR, so pairing
+        // costs the user nothing; saving an empty secret field opts out.
+        var resolvedSecret = storedSecret
+        if storedSecret.isEmpty && !defaults.bool(forKey: Self.defaultsSecretOptOutKey) {
+            resolvedSecret = Self.generateSecret()
+            defaults.set(resolvedSecret, forKey: Self.defaultsSecretKey)
+        }
+
+        secret = secretOverride ?? resolvedSecret
         if let portOverride { defaults.set(Int(portOverride), forKey: Self.defaultsPortKey) }
         if let secretOverride { defaults.set(secretOverride, forKey: Self.defaultsSecretKey) }
 
         let ips = NetworkAddresses.preferredIPv4Addresses()
         availableIPs = ips
         selectedIP = ips.first ?? ""
+    }
+
+    /// Cryptographically secure pairing secret. Ambiguous characters
+    /// (l, 1, I, 0, O) are left out so the field stays readable in settings.
+    static func generateSecret(length: Int = 24) -> String {
+        let alphabet = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+        var rng = SystemRandomNumberGenerator()
+        var chars: [Character] = []
+        for _ in 0..<length {
+            let offset = alphabet.index(alphabet.startIndex, offsetBy: Int.random(in: 0..<alphabet.count, using: &rng))
+            chars.append(alphabet[offset])
+        }
+        return String(chars)
     }
 
     var isListening: Bool { serverState == .listening }
@@ -183,6 +207,9 @@ final class AppState: ObservableObject {
         let defaults = UserDefaults.standard
         defaults.set(Int(newPort), forKey: Self.defaultsPortKey)
         defaults.set(newSecret, forKey: Self.defaultsSecretKey)
+        // An explicitly saved empty secret is a deliberate opt-out; without
+        // this flag a fresh launch would generate a new one.
+        defaults.set(newSecret.isEmpty, forKey: Self.defaultsSecretOptOutKey)
         startServer()
     }
 

@@ -38,14 +38,17 @@ object UpdateChecker {
 
             val body = connection.inputStream.bufferedReader().use { it.readText() }
             val root = JSONObject(body)
-            val tag = root.optString("tag_name").removePrefix("v")
+            val rawTag = root.optString("tag_name")
+            val tag = rawTag.removePrefix("v")
             val assets = root.optJSONArray("assets") ?: return CheckResult.UpToDate
 
+            // Exact name match: a stray APK from an older or parallel build
+            // in the same release must never be picked up.
+            val expectedName = "CallBridge-$rawTag.apk"
             var apkUrl: String? = null
             for (i in 0 until assets.length()) {
                 val asset = assets.getJSONObject(i)
-                val name = asset.optString("name")
-                if (name.startsWith("CallBridge-") && name.endsWith(".apk")) {
+                if (asset.optString("name") == expectedName) {
                     apkUrl = asset.optString("browser_download_url")
                     break
                 }

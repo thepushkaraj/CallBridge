@@ -241,9 +241,14 @@ class MainActivity : AppCompatActivity() {
             return false
         }
         hostLayout.error = null
+        val port = portInput.text.toString().trim().ifEmpty { "8765" }
+        if (port.toIntOrNull() !in 1..65535) {
+            Toast.makeText(this, R.string.port_invalid, Toast.LENGTH_SHORT).show()
+            return false
+        }
         prefs.edit()
             .putString("host", host)
-            .putString("port", portInput.text.toString().trim().ifEmpty { "8765" })
+            .putString("port", port)
             .putString("secret", secretInput.text.toString().trim())
             .apply()
         refreshStatus()

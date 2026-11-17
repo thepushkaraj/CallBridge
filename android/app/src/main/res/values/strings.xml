@@ -27,6 +27,7 @@
     <string name="save">Save settings</string>
     <string name="host_required">Enter your Mac\'s IP address</string>
     <string name="host_not_local">Use a private address on your Wi-Fi, such as 192.168.x.x</string>
+    <string name="port_invalid">Port must be a number from 1 to 65535</string>
 
     <!-- Connection test -->
     <string name="test_title">Connection test</string>
