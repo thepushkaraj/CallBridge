@@ -1,15 +1,23 @@
 import AppKit
+import CryptoKit
 import Foundation
 
 /// GitHub-Releases-backed update check + download + install for the Mac app.
-/// The repo must have a published release whose assets include the .app zip.
+/// The repo must have a published release whose assets include the .app zip
+/// and its Ed25519 signature. Archives without a valid signature are never
+/// offered or installed.
 enum MacUpdateCenter {
     static let repoSlug = "thepushkaraj/CallBridge"
     private static let api = "https://api.github.com/repos/thepushkaraj/CallBridge/releases/latest"
 
+    /// Ed25519 public key matching the RELEASE_SIGNING_KEY secret. The
+    /// private half never ships; nothing unsigned can be installed.
+    private static let updatePublicKeyBase64 = "cBOrD7BkQbTDj0exyOUiRjMS/60+M8D6AJV8ybHB4MA="
+
     struct Update {
         let version: String
         let zipURL: URL
+        let sigURL: URL
     }
 
     enum CheckOutcome {
@@ -77,13 +85,45 @@ enum MacUpdateCenter {
             let zip = assets.first {
                 ($0["name"] as? String) == "CallBridge-macOS.zip"
             }.flatMap { $0["browser_download_url"] as? String }
+            let sig = assets.first {
+                ($0["name"] as? String) == "CallBridge-macOS.zip.sig"
+            }.flatMap { $0["browser_download_url"] as? String }
             guard let zipURLString = zip, let zipURL = URL(string: zipURLString) else {
                 outcome = .upToDate
                 return
             }
+            // Fail closed: an archive we cannot verify is not offered.
+            guard let sigURLString = sig, let sigURL = URL(string: sigURLString) else {
+                outcome = .upToDate
+                return
+            }
 
-            outcome = .available(Update(version: version, zipURL: zipURL))
+            outcome = .available(Update(version: version, zipURL: zipURL, sigURL: sigURL))
         }.resume()
+    }
+
+    /// Fetches the base64 signature attached to a release.
+    static func fetchSignature(at url: URL, completion: @escaping (String?) -> Void) {
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 15
+        URLSession.shared.dataTask(with: request) { data, response, _ in
+            let status = (response as? HTTPURLResponse)?.statusCode ?? -1
+            let text = (status == 200 && data != nil)
+                ? String(decoding: data!, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+                : nil
+            DispatchQueue.main.async { completion(text) }
+        }.resume()
+    }
+
+    /// Ed25519 verification against the public key baked into the app.
+    static func isValidSignature(_ signatureBase64: String, forArchive archive: URL) -> Bool {
+        guard
+            let keyData = Data(base64Encoded: updatePublicKeyBase64),
+            let publicKey = try? Curve25519.Signing.PublicKey(rawRepresentation: keyData),
+            let signature = Data(base64Encoded: signatureBase64),
+            let archiveData = try? Data(contentsOf: archive)
+        else { return false }
+        return publicKey.isValidSignature(signature, for: archiveData)
     }
 
     /// Swaps the running bundle with the downloaded one and relaunches.

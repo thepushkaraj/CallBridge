@@ -20,3 +20,6 @@ captures/
 # ZCode workspace & local build artifacts
 .zcode/
 /CallBridge-*.apk
+
+# Mac update signing key (Ed25519, base64 raw representation)
+mac/update-signing.key

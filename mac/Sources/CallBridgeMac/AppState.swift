@@ -39,6 +39,7 @@ final class AppState: ObservableObject {
     @Published private(set) var isCheckingForUpdates = false
     @Published private(set) var upToDateNotice = false
     private var updateZipURL: URL?
+    private var updateSigURL: URL?
     private lazy var updateDownloader = UpdateDownloader()
 
     static let defaultsPortKey = "port"
@@ -75,6 +76,7 @@ final class AppState: ObservableObject {
                 if self.availableUpdate != update.version {
                     self.availableUpdate = update.version
                     self.updateZipURL = update.zipURL
+                    self.updateSigURL = update.sigURL
                 }
                 if manual {
                     Notifier.showNotice(
@@ -120,8 +122,26 @@ final class AppState: ObservableObject {
             self?.updateState = .downloading(fraction)
         }
         updateDownloader.onComplete = { [weak self] zip in
-            guard let self else { return }
-            self.updateState = (zip != nil) ? .ready : .idle
+            guard let self, let zip, let sigURL = self.updateSigURL else {
+                self?.updateState = .idle
+                return
+            }
+            // Fail closed: the archive is only marked ready after its
+            // Ed25519 signature checks out. Nothing is touched otherwise.
+            MacUpdateCenter.fetchSignature(at: sigURL) { signature in
+                guard
+                    let signature,
+                    MacUpdateCenter.isValidSignature(signature, forArchive: zip)
+                else {
+                    self.updateState = .idle
+                    Notifier.showNotice(
+                        title: "Update rejected",
+                        body: "The downloaded update failed signature verification. Nothing was installed."
+                    )
+                    return
+                }
+                self.updateState = .ready
+            }
         }
         updateDownloader.download(from: zipURL)
     }

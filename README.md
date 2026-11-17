@@ -98,6 +98,12 @@ Delivery is best-effort. Each event is one POST with a 4-second timeout
 and no retry. If the Mac is asleep, or the Wi-Fi blip lasts longer than
 that, the call or text is dropped.
 
+Updates are signed. The Mac updater verifies an Ed25519 signature over
+the archive before installing anything, and refuses archives that do not
+match. Android updates are verified by the OS package installer, which
+refuses archives not signed with the app's release key. The signing keys
+are held as repository secrets and never ship with the apps.
+
 ## Releases
 
 Prebuilt binaries are attached to every [GitHub release](https://github.com/thepushkaraj/CallBridge/releases):
