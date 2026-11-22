@@ -1,0 +1,25 @@
+name: CI
+
+# Fast build check on every push and pull request, so feature branches
+# are verified before merge. The tag-driven release builds live in
+# macos.yml and android.yml.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mac-build:
+    permissions:
+      contents: read
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the Mac app
+        run: swift build
+        working-directory: mac
