@@ -45,8 +45,25 @@ struct AppView: View {
     @EnvironmentObject private var state: AppState
     @State private var notificationsDenied = false
     @State private var settingsExpanded = false
+    @State private var showHistory = false
 
     var body: some View {
+        ZStack {
+            if showHistory {
+                HistoryPage(onBack: { showHistory = false })
+                    .transition(.move(edge: .trailing))
+            } else {
+                mainPage
+                    .transition(.move(edge: .leading))
+            }
+        }
+        .animation(.easeInOut(duration: 0.18), value: showHistory)
+        .onReceive(NotificationCenter.default.publisher(for: .notifierPermissionDenied)) { _ in
+            notificationsDenied = true
+        }
+    }
+
+    private var mainPage: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
 
@@ -102,15 +119,12 @@ struct AppView: View {
         .padding(.top, 24)
         .padding(.bottom, 20)
         .frame(width: 440, alignment: .leading)
-        .onReceive(NotificationCenter.default.publisher(for: .notifierPermissionDenied)) { _ in
-            notificationsDenied = true
-        }
     }
 
     // MARK: Header
 
     private var header: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("CallBridge")
                     .font(.system(size: 20, weight: .bold))
@@ -121,34 +135,30 @@ struct AppView: View {
                     .truncationMode(.middle)
             }
             Spacer(minLength: 8)
-            statusView
-                .padding(.top, 2)
+            historyButton
         }
+    }
+
+    /// The history entry point lives in the header, centered against the
+    /// title block.
+    private var historyButton: some View {
+        Button {
+            showHistory = true
+        } label: {
+            Image(systemName: "clock.arrow.circlepath")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(.secondary)
+                .padding(8)
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Notification history")
+        .help("Notification history")
     }
 
     private var subtitle: String {
         if state.selectedIP.isEmpty { return "No network connection" }
         return "\(state.selectedIP)  ·  port \(state.port)"
-    }
-
-    private var statusView: some View {
-        let (dot, label): (Color, String) = {
-            switch state.serverState {
-            case .listening:
-                return (Theme.accent, "Ready")
-            case .starting:
-                return (Color.secondary, "Starting…")
-            case .failed:
-                return (Color(nsColor: .systemRed), "Not listening")
-            }
-        }()
-        return HStack(spacing: 6) {
-            Circle().fill(dot).frame(width: 7, height: 7)
-            Text(label)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.secondary)
-        }
-        .fixedSize()
     }
 
     // MARK: Actions
@@ -435,6 +445,133 @@ struct LastEventRow: View {
         case "SMS": return "message.fill"
         default: return "checkmark.circle.fill"
         }
+    }
+}
+
+// MARK: - History page
+// Everything the app has received, newest first, local to this Mac. The
+// switch in the top bar is the opt-out; turning it off erases the archive
+// at once.
+
+private struct HistoryPage: View {
+    @EnvironmentObject private var history: HistoryStore
+    let onBack: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 10) {
+                Button(action: onBack) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Back to the main page")
+
+                Text("History")
+                    .font(.system(size: 17, weight: .bold))
+
+                Spacer(minLength: 8)
+
+                Toggle("Save history", isOn: $history.isEnabled)
+                    .toggleStyle(.switch)
+                    .controlSize(.mini)
+                    .labelsHidden()
+                    .accessibilityLabel("Save notification history")
+            }
+            .padding(.bottom, 6)
+
+            if !history.isEnabled {
+                Text("Notifications are not being saved while history is off.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 14)
+            }
+
+            if history.entries.isEmpty {
+                if history.isEnabled {
+                    Text("Nothing yet. Notifications you receive will appear here.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 14)
+                }
+            } else {
+                HStack(spacing: 8) {
+                    Text("Stored on this Mac only.")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                    Spacer(minLength: 8)
+                    Button("Clear") { history.clear() }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                }
+                .padding(.top, 10)
+
+                ScrollView {
+                    VStack(spacing: 14) {
+                        ForEach(history.entries) { entry in
+                            HistoryRow(entry: entry)
+                        }
+                    }
+                    .padding(.top, 12)
+                    .padding(.bottom, 4)
+                }
+                .padding(.top, 4)
+            }
+        }
+        .padding(.horizontal, 28)
+        .padding(.top, 24)
+        .padding(.bottom, 16)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+
+private struct HistoryRow: View {
+    let entry: HistoryEntry
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: symbol)
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+                .padding(.top, 2)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(entry.title)
+                    .font(.callout.weight(.medium))
+                if !entry.detail.isEmpty {
+                    Text(entry.detail)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+            }
+            Spacer(minLength: 8)
+            Text(timestamp)
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.tertiary)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var symbol: String {
+        switch entry.kind {
+        case .ringing: return "phone.arrow.down.left.fill"
+        case .sms: return "message.fill"
+        case .test: return "checkmark.circle.fill"
+        }
+    }
+
+    /// Today reads as a time; anything older carries its date.
+    private var timestamp: String {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(entry.date) {
+            return entry.date.formatted(.dateTime.hour().minute())
+        }
+        if calendar.isDateInYesterday(entry.date) {
+            return "Yesterday " + entry.date.formatted(.dateTime.hour().minute())
+        }
+        return entry.date.formatted(.dateTime.month(.abbreviated).day()) +
+            ", " + entry.date.formatted(.dateTime.hour().minute())
     }
 }
 

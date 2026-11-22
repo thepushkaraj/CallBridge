@@ -10,6 +10,9 @@ struct Options {
     var secret: String?
     var headless = false
     var appearance: NSAppearance?
+    #if DEBUG
+    var renderPath: String?
+    #endif
 }
 
 let usage = """
@@ -42,6 +45,15 @@ func parseOptions() -> Options {
             options.secret = value
         case "--headless":
             options.headless = true
+        #if DEBUG
+        case "--render":
+            // Debug aid: snapshot the window to a PNG after launch, then quit.
+            guard let value = args.next() else {
+                print(usage)
+                exit(2)
+            }
+            options.renderPath = value
+        #endif
         case "--appearance":
             guard let value = args.next() else {
                 print(usage)
@@ -122,9 +134,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.title = "CallBridge"
         window.minSize = NSSize(width: 410, height: 520)
         window.isReleasedWhenClosed = false
-        window.contentView = NSHostingView(rootView: AppView().environmentObject(appState))
+        window.contentView = NSHostingView(rootView: AppView()
+            .environmentObject(appState)
+            .environmentObject(appState.history))
         window.center()
         window.makeKeyAndOrderFront(nil)
+
+        #if DEBUG
+        if let renderPath = options.renderPath {
+            // Parked offscreen: the snapshot needs a laid-out, visible-style
+            // window, not one the user has to watch flash by.
+            window.setFrameOrigin(NSPoint(x: -32000, y: 32000))
+            window.appearance = options.appearance
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                defer { NSApp.terminate(nil) }
+                guard let view = window.contentView,
+                      let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
+                if let context = NSGraphicsContext(bitmapImageRep: rep) {
+                    NSGraphicsContext.saveGraphicsState()
+                    NSGraphicsContext.current = context
+                    NSColor.windowBackgroundColor.setFill()
+                    view.bounds.fill(using: .sourceOver)
+                    NSGraphicsContext.restoreGraphicsState()
+                }
+                view.cacheDisplay(in: view.bounds, to: rep)
+                guard let data = rep.representation(using: .png, properties: [:]) else { return }
+                try? data.write(to: URL(fileURLWithPath: renderPath))
+            }
+        }
+        #endif
         self.window = window
 
         if let appearance = forcedAppearance {
