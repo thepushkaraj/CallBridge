@@ -26,6 +26,10 @@ final class AppState: ObservableObject {
 
     private var server: CallServer?
 
+    /// Local history of received notifications. Owned here because every
+    /// received event funnels through record(_:).
+    let history = HistoryStore()
+
     // MARK: App update
 
     enum UpdateDownloadState: Equatable {
@@ -238,5 +242,9 @@ final class AppState: ObservableObject {
             detail = ""
         }
         lastEvent = LastEvent(title: title, detail: detail, time: Date())
+
+        if let kind = HistoryEntry.Kind(event: call.event) {
+            history.record(kind: kind, title: title, detail: detail)
+        }
     }
 }
