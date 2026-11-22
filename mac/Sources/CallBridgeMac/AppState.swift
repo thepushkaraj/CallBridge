@@ -244,7 +244,7 @@ final class AppState: ObservableObject {
         lastEvent = LastEvent(title: title, detail: detail, time: Date())
 
         if let kind = HistoryEntry.Kind(event: call.event) {
-            history.record(kind: kind, title: title, detail: detail)
+            history.record(kind: kind, title: title, detail: detail, body: call.body)
         }
     }
 }

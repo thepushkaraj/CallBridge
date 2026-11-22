@@ -528,6 +528,10 @@ private struct HistoryPage: View {
 
 private struct HistoryRow: View {
     let entry: HistoryEntry
+    @State private var expanded = false
+    @State private var copied = false
+
+    private var isSMS: Bool { entry.kind == .sms }
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -542,15 +546,28 @@ private struct HistoryRow: View {
                     Text(entry.detail)
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                        .lineLimit(2)
+                        .lineLimit(expanded ? nil : 2)
+                        .fixedSize(horizontal: false, vertical: expanded)
                 }
             }
             Spacer(minLength: 8)
-            Text(timestamp)
-                .font(.caption.monospacedDigit())
-                .foregroundStyle(.tertiary)
+            VStack(alignment: .trailing, spacing: 6) {
+                Text(timestamp)
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.tertiary)
+                if isSMS {
+                    copyChip
+                }
+            }
+        }
+        .padding(.vertical, 2)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            guard isSMS else { return }
+            withAnimation(.easeInOut(duration: 0.15)) { expanded.toggle() }
         }
         .accessibilityElement(children: .combine)
+        .accessibilityHint(isSMS ? "Tap to read the full message" : "")
     }
 
     private var symbol: String {
@@ -572,6 +589,31 @@ private struct HistoryRow: View {
         }
         return entry.date.formatted(.dateTime.month(.abbreviated).day()) +
             ", " + entry.date.formatted(.dateTime.hour().minute())
+    }
+
+    /// The code the banner would have detected, or nil for plain messages.
+    private var detectedCode: String? {
+        let source = entry.body.isEmpty ? entry.detail : entry.body
+        return OTPExtractor.extract(from: source)
+    }
+
+    private var copyChip: some View {
+        Button {
+            let text = detectedCode ?? (entry.body.isEmpty ? entry.detail : entry.body)
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(text, forType: .string)
+            copied = true
+            Task {
+                try? await Task.sleep(nanoseconds: 1_600_000_000)
+                await MainActor.run { copied = false }
+            }
+        } label: {
+            Text(copied ? "Copied ✓" : (detectedCode != nil ? "Copy code" : "Copy message"))
+                .font(.caption.weight(.semibold))
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.regular)
+        .help("Copy to the clipboard")
     }
 }
 

@@ -15,6 +15,32 @@ struct HistoryEntry: Identifiable, Codable, Equatable {
     let kind: Kind
     let title: String
     let detail: String
+    /// Raw message text for sms entries; empty for calls and tests.
+    let body: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, date, kind, title, detail, body
+    }
+
+    init(id: UUID, date: Date, kind: Kind, title: String, detail: String, body: String = "") {
+        self.id = id
+        self.date = date
+        self.kind = kind
+        self.title = title
+        self.detail = detail
+        self.body = body
+    }
+
+    // Archives written before the body field existed decode cleanly.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        date = try container.decode(Date.self, forKey: .date)
+        kind = try container.decode(Kind.self, forKey: .kind)
+        title = try container.decode(String.self, forKey: .title)
+        detail = try container.decode(String.self, forKey: .detail)
+        body = try container.decodeIfPresent(String.self, forKey: .body) ?? ""
+    }
 }
 
 extension HistoryEntry.Kind {
@@ -59,9 +85,9 @@ final class HistoryStore: ObservableObject {
 
     /// Appends an entry at the top and persists the archive off the main
     /// thread. No-ops while history is disabled.
-    func record(kind: HistoryEntry.Kind, title: String, detail: String) {
+    func record(kind: HistoryEntry.Kind, title: String, detail: String, body: String = "") {
         guard isEnabled else { return }
-        let entry = HistoryEntry(id: UUID(), date: Date(), kind: kind, title: title, detail: detail)
+        let entry = HistoryEntry(id: UUID(), date: Date(), kind: kind, title: title, detail: detail, body: body)
         entries.insert(entry, at: 0)
         if entries.count > Self.maxEntries {
             entries.removeLast(entries.count - Self.maxEntries)
